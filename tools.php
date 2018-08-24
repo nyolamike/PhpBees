@@ -183,7 +183,7 @@
                 )
             )
         );
-        $tools_res = tools_read($node_name,$query,$structure,$conn,"",array(),false); 
+        $tools_res = tools_read($node_name,$query,$structure,$conn,"",array(),false,array()); 
         //nyd
         //db_read_indexed($conn,"SELECT * FROM hive ",$show_errors);
         $query_form = array($node_name=>$query);
@@ -272,23 +272,61 @@
                     if($i+1 == count($children_path_parts)){
                         $child_table_name  = Inflect::singularize($children_path_part);
                         //the source of truth has to contibute parent ids
-                        $id_sql = "";
+                        $id_sql = array();
                         if($former_ref_kind == "array"){
                             $parent_table_name  = Inflect::singularize($children_path_parts[$i-1]);
                             foreach ($source_of_truth as $obj) {
-                                $id_sql = $id_sql . " " . $parent_table_name . "_id = " . $obj["id"] . " OR ";
+                                if(count($id_sql)==0){
+                                    array_push($id_sql,array(
+                                        $parent_table_name . "_id",
+                                        "=",
+                                        $obj["id"]
+                                    ));
+                                }else{
+                                    //get the former entry
+                                    $entry = $id_sql[0];
+                                    array_push($id_sql,array(
+                                        $entry,
+                                        "OR",
+                                        array(
+                                            $parent_table_name . "_id",
+                                            "=",
+                                            $obj["id"]
+                                        )
+                                    ));
+                                }
+                                
                             }
                         }elseif($this_is_an_object && $former_ref_kind == "object"){
                             $obj = $source_of_truth;
                             $id_sql = $id_sql . " " . $parent_table_name . "_id = " . $obj["id"] . " OR ";
+                            if(count($id_sql)==0){
+                                $id_sql[0] = array(
+                                    $parent_table_name . "_id",
+                                    "=",
+                                    $obj["id"]
+                                );
+                            }else{
+                                //get the former entry
+                                $entry = $id_sql[0];
+                                $id_sql[0] = array(
+                                    $entry,
+                                    "OR",
+                                    array(
+                                        $parent_table_name . "_id",
+                                        "=",
+                                        $obj["id"]
+                                    )
+                                );
+                            }
                         }
-                        echo $id_sql . "<br/>";
-                        //var_dump($query_source);
+                        //echo $id_sql . "<br/>";
+                        //var_dump($id_sql);
                         //nyd
                         //get honey of these children
                         $child_node_name = $children_path_part;
                         $child_query = $query_source[$children_path_part];
-                        $tools_children_res = tools_read($child_node_name,$child_query,$structure,$conn,"",array(),true); 
+                        $tools_children_res = tools_read($child_node_name,$child_query,$structure,$conn,"",array(),true,$id_sql); 
 
                         //inject that honey into current honey structure
 
@@ -419,11 +457,15 @@
         $table_name = Inflect::singularize($node_name);
         
         //_a must always be there if not it is inserted as the first attribute
-        if(!array_key_exists("_a")){
+        if(!array_key_exists("_a",$node)){
             $node = array_merge(array("_a"=>array()),  $node); 
         }
 
-        
+        //if the parents_where is not empty
+        //and this node has no _w then its injected in
+        if(count($parent_w) > 0 && !array_key_exists("_w",$node)){
+            $node["_w"] = array();
+        }
 
         foreach ($node as $node_key => $node_key_value) {
             if($node_key == "_a"){
@@ -439,7 +481,8 @@
 
             if($node_key == "_w"){
                 $where_array = array_merge($node_key_value,$parent_w);
-                $mixer_res = mixer_interprete_where($node,$where_array,$structure,$connection,$path);
+                $mixer_res = mixer_interprete_where($node,$node_name,$where_array,$structure,$connection,$path);
+                continue;
             }
             
             
@@ -451,7 +494,7 @@
             $parent_id_exists = array_key_exists($singular."_id", $structure[$table_name]);
             if($node_key == $singular && $parent_id_exists ){
                 //echo "foo";
-                $tools_res = tools_read($node_key,$node_key_value,$structure,$connection,$path,$children,false);
+                $tools_res = tools_read($node_key,$node_key_value,$structure,$connection,$path,$children,false,array());
                 //var_dump($tools_res);
                 $temp_cols_sql = $temp_cols_sql . " " . $tools_res[0]["temp_cols_sql"];
                 $errors = array_merge($errors, $tools_res[1]);
@@ -471,7 +514,7 @@
                 //echo "foo";
                 array_push($children,$path."__".$node_key);
                 //var_dump($children);
-                $tools_res = tools_read($node_key,$node_key_value,$structure,$connection,$path,$children,false);
+                $tools_res = tools_read($node_key,$node_key_value,$structure,$connection,$path,$children,false,array());
                 $errors = array_merge($errors, $tools_res[1]);
                 $structure = $tools_res[2];
                 $children =  $tools_res[0]["temp_children"];

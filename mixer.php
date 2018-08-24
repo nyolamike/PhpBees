@@ -97,12 +97,30 @@
     }
 
 
-    function mixer_interprete_where($node,$where_array,$structure,$connection,$path){
+    function mixer_interprete_where($node,$node_name,$where_array,$structure,$connection,$path){
         $errors = array();
-
-
-
+        $sql = "";
+        $singular  = Inflect::singularize($node_name);
+        for ($i=0 ; $i < count($where_array); $i++ ) { 
+            $sql = $sql . " " . mixer_remix($where_array[$i],$singular);
+        }
+        var_dump($sql);
         
         return array($sql,$errors,$structure);
     }
+    
+    function mixer_remix($config,$singular){
+        $left = $config[0];
+        $condition = trim($config[1]);
+        $right = $config[2];
+        $sql = "";
+        if($condition == "="){
+            //left side =  right side
+            $val_left = (is_array($left))? mixer_remix($config) : ("" . $singular . "." . $left);
+            $val_right = (is_array($right))? mixer_remix($right) : ("" . $singular . "." . $right);
+            $sql = $sql . " " . $val_left . " = " . $right;
+        }
+        return $sql;
+    }
+
 ?>
