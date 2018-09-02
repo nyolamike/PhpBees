@@ -104,7 +104,7 @@
         for ($i=0 ; $i < count($where_array); $i++ ) { 
             $sql = $sql . " " . mixer_remix($where_array[$i],$singular);
         }
-        var_dump($sql);
+        //var_dump($sql);
         
         return array($sql,$errors,$structure);
     }
@@ -121,6 +121,75 @@
             $sql = $sql . " " . $val_left . " = " . $right;
         }
         return $sql;
+    }
+
+    function mixer_construct_selection_sql($table_name,$sql_segments){
+        $sections_sql = rtrim(trim($sql_segments[0]["temp_cols_sql"]), ',');
+        $where_sql = trim($sql_segments[0]["temp_where_sql"]);
+        $inner_joins_sql = $sql_segments[0]["temp_inner_join_sql"];
+        $sql = "SELECT " . $cols_sql . " FROM " .  $table_name . " " . $inner_joins_sql . " ";
+        if(strlen($where_sql)>0){
+            $sql = $sql . " WHERE " . $where_sql;
+            echo $sql;
+            exit(0);
+        }
+        return $sql;
+    }
+
+    function mixer_construct_honey($rows){
+        $honey = array();
+        foreach ($rows as $row_index => $row_value) {
+            foreach ($row_value as $path_to => $path_value) {
+                if(preg_match('/^\d+$/', $path_to)){
+                    continue;
+                }else{
+                    //desconstruct the path to the value
+                    $path_parts = explode("__",$path_to); 
+
+                    //walk through the honey
+                    $honey_ref = &$honey;
+                    for ($i=0; $i < count($path_parts); $i++) { 
+                        $path_part = $path_parts[$i];
+                        //detect if its the last part which indicates value
+                        if($i+1 == count($path_parts)){
+                            //nyd
+                            //consult the structure to know the data type to 
+                            //use to render the value
+
+                            //nyd
+                            //insert value
+                            $honey_ref[$path_part] = $path_value;
+                            unset($honey_ref); //http://php.net/manual/en/language.references.arent.php
+                            continue;
+                        }
+                        if(!array_key_exists($path_part,$honey_ref)){
+                            //determine if its a collection or an object
+                            $singular  = Inflect::singularize($path_part);
+                            if($singular == $path_part){//then path_part was singular
+                                //create an array then create and object array inside this one
+                                $honey_ref[$path_part] = array();
+                                $honey_ref = &$honey_ref[$path_part];
+                            }else{
+                                $honey_ref[$path_part] = array(array());
+                                $honey_ref = &$honey_ref[$path_part][0];
+                            }
+                        }else{
+                            //the key exists
+                            //determine if its a collection or an object
+                            $singular  = Inflect::singularize($path_part);
+                            if($singular == $path_part){//then path_part was singular
+                                //get a refrence to this object
+                                $honey_ref = &$honey_ref[$path_part];
+                            }else{
+                                //get the reference to the last element of the array
+                                $honey_ref = &$honey_ref[$path_part][count($honey_ref[$path_part])-1];
+                            }
+                        }
+                    }                           
+                }
+            }
+        }
+        return $honey;
     }
 
 ?>

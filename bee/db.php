@@ -107,34 +107,7 @@ function db_default_column_def(){
     return array("vcn",100);
 }
 
-function db_definition_to_cols($definition){
-    $cols = array();
-    foreach ($definition as $col => $col_def) {
-        if(tools_startsWith($col,"_") || tools_startsWith($col_def,"_")){
-            continue;
-        }
-        //apply a default definition if no definition is found
-        if(is_numeric($col)){
-            $col_temp = db_vcn($col_def,100); 
-            array_push($cols,$col_temp);
-            continue;
-        }
 
-        if(tools_startsWith($col_def[0],"inn")){ $col_temp = db_inn($col,$col_def[1]); array_push($cols,$col_temp); continue;}
-        if(tools_startsWith($col_def[0],"fk")){ $col_temp = db_fk($col); array_push($cols,$col_temp); continue;}
-        if(tools_startsWith($col_def[0],"inn_d")){ $col_temp = db_inn_d($col,$col_def[1],$col_def[2]); array_push($cols,$col_temp); continue;}
-        if(tools_startsWith($col_def[0],"in")){ $col_temp = db_in($col,$col_def[1]); array_push($cols,$col_temp); continue;}
-        if(tools_startsWith($col_def[0],"dnn")){ $col_temp = db_dnn($col); array_push($cols,$col_temp); continue;}
-        if(tools_startsWith($col_def[0],"vcnn")){ $col_temp = db_vcnn($col,$col_def[1]); array_push($cols,$col_temp); continue;}
-        if(tools_startsWith($col_def[0],"vcn")){ $col_temp = db_vcn($col,$col_def[1]); array_push($cols,$col_temp); continue;}
-        if(tools_startsWith($col_def[0],"vcnn_d")){ $col_temp = db_vcnn_d($col,$col_def[1],$col_def[2]); array_push($cols,$col_temp);  continue;}
-        if(tools_startsWith($col_def[0],"tn")){ $col_temp = db_tn($col); array_push($cols,$col_temp); continue;}
-        if(tools_startsWith($col_def[0],"tnn")){ $col_temp = db_tnn($col); array_push($cols,$col_temp); continue;}
-        if(tools_startsWith($col_def[0],"tsnn")){ $col_temp = db_tsnn($col); array_push($cols,$col_temp); continue;}
-        if(tools_startsWith($col_def[0],"dtnn")){ $col_temp = db_dtnn($col); array_push($cols,$col_temp); continue;}
-    }
-    return array($cols,array());
-}
 
 
 
