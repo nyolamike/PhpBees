@@ -1,0 +1,355 @@
+{
+    "versions":{
+        "1.0.0":"Initial Setup"
+    },
+    "hive_of_a":"shop",
+    "combs":{
+        "currency":{
+            "name": ["vcnn",30],
+            "symbol": ["vcnn",30],
+            "description":["tn"]
+        },
+        "currency_conversion":{
+            "currency_id": ["fk"],
+            "other_currency_id": ["fk"],
+            "equals_value":["dnn"],
+            "on_date":["dtnn"],
+            "notes": ["tn"],
+            "_comment":"one currency_id equals value of other currency_id on date x"
+        },
+        "bank":{
+            "name":["vcnn",30]
+        },
+        "payment_type":{
+            "name": ["vcnn",30],
+            "description":["tn"]
+        },
+        "client":{
+            "name":["vcnn",30],
+            "image": ["tnn",30,"default_avatar.png"],
+            "phone_number": ["vcnn",30],
+            "email": ["vcnn",30],
+            "address": ["tn"],
+            "notes": ["tn"],
+            "_comment":"The organisation or person who bring work to the shop"
+        },
+        "client_payment":{
+            "client_id":["fk"],
+            "payment_type_id":["fk"],
+            "amount":["dnn",30,0,"The money that the client has paid"],
+            "amount_given":["dnn",30,0,"The money that the client has given to the teller"],
+            "change_given":["dnn",30,0,"The change given back the client usually called balance"],
+            "bill_on_payment_date": ["dnn",30,0,"The clients bill on the day of payment, default client should really have no bill"],
+            "document_number":["tn"],
+            "transaction_id":["tn"],
+            "payment_status":["vcnn",30,"pending"],
+            "notes":["tn"]
+        },
+        "expense_type":{
+            "name": ["vcnn",30],
+            "description":["tn"]
+        },
+        "expense_category":{
+            "name": ["vcnn",30],
+            "description":["tn"]
+        },
+        "expense_item":{
+            "expense_category_id":["fk"],
+            "expense_type_id":["fk"],
+            "name":["vcnn",100],
+            "description":["tn"]
+        },
+        "expense":{
+            "expense_item_id":["fk"],
+            "service_id":["fk"],
+            "amount":["dnn",30,0],
+            "by":["tn"],
+            "notes":["tn"],
+            "date_time":["inn",30,"__","The date and time when this expense was consumed, its not the time of entry of the expense in the system"]
+        },
+        "section":{
+            "name": ["vcnn",30],
+            "description":["tn"]
+        },
+        "service":{
+            "name": ["vcnn",30],
+            "description":["tn"],
+            "cost_price":["dnn"],
+            "notes": ["tn"],
+            "_comment":"e.g triming/job costs 500 pulla per print job"
+        },
+        "store":{
+            "name": ["vcnn",30],
+            "description":["tn"]
+        },
+        "unit":{
+            "name": ["vcnn",30],
+            "symbol": ["vcnn",30],
+            "description":["tn"]
+        },
+        "unit_conversion":{
+            "unit_id": ["vcnn",30],
+            "other_unit_id": ["vcnn",30],
+            "equals_value":["dnn"],
+            "notes": ["tn"]
+        },
+        "brand":{
+            "name": ["vcnn",30],
+            "description":["tn"]
+        },
+        "manufacturer":{
+            "name": ["vcnn",30],
+            "description":["tn"]
+        },
+        "product_type":{
+            "name": ["vcnn",30],
+            "description":["tn"]
+        },
+        "product_category":{
+            "name": ["vcnn",30],
+            "description":["tn"]
+        },
+        "product":{
+            "product_category_id": ["fk"],
+            "product_type_id": ["fk"],
+            "section_id": ["fk"],
+            "unit_id": ["fk"],
+            "store_id": ["fk",30,"__","The default store of the product"],
+            "brand_id": ["fk"],
+            "manufacturer_id": ["fk"],
+            "name": ["vcnn",30],
+            "code": ["vcnn",30],
+            "cost_price":["dnn",30,0,"The default cost of buying this product from a supplier"],
+            "selling_price":["dnn",30,0,"The default selling price for the product to the client"],
+            "quantity":["dnn",30,0,"The current quantity of the product in the system"],
+            "notification_level":["dnn",30,"__","The quantity that will trigger off an notification fro restocking"],
+            "image":["tnn",30,"default_product.png"],
+            "serial_number1": ["vcn",100],
+            "serial_number2": ["vcn",100],
+            "serial_number3": ["vcn",100],
+            "serial_number4": ["vcn",100],
+            "size": ["vcn",30],
+            "color": ["vcn",30],
+            "extras":["tn"],
+            "description":["tn"]
+        },
+        "store_product":{
+            "store_id":["fk"],
+            "product_id":["fk"],
+            "quantity":["dnn"]
+        },
+        "stockin":{
+            "date_time":["inn",30],
+            "document_number":["vcnn",30,"__","The order number or auto generated number"],
+            "store_id":["fk"],
+            "section_id":["fk"],
+            "notes": ["tn"]
+        },
+        "stockin_item":{
+            "stockin_id":["fk"],
+            "product_id":["fk"],
+            "unit_id":["fk"],
+            "cost_price":["dnn"],
+            "quantity":["dnn"]
+        },
+        "stockout":{
+            "date_time":["inn",30],
+            "document_number":["vcnn",30,"__","The rquisition number or auto generated number"],
+            "store_id":["fk"],
+            "section_id":["fk"],
+            "notes": ["tn"]
+        },
+        "stockout_item":{
+            "stockout_id":["fk"],
+            "product_id":["fk"],
+            "unit_id":["fk"],
+            "cost_price":["dnn",30,"__","What cost price was the product at the stockout time"],
+            "quantity":["dnn"]
+        },
+        "stock_transfer":{
+            "document_number":["vcnn",30,"__","The requisition number or auto generated number"],
+            "date_time":["inn",30],
+            "store_id":["fk"],
+            "other_store_id":["fk"],
+            "notes": ["tn"]
+        },
+        "stock_transfer_item":{
+            "stock_transfer_id":["fk"],
+            "product_id":["fk"],
+            "unit_id":["fk"],
+            "cost_price":["dnn",30,"__","What cost price was the product at the stockout time"],
+            "quantity":["dnn"]
+        },
+        "sells_receipt":{
+            "client_id":["fk"],
+            "client_payment_id":["fk"],
+            "section_id":["fk"],
+            "document_number":["vcnn",30,"__","The receipt number or auto generated number"],
+            "date_time":["inn",30],
+            "vat":["dnn"],
+            "discount":["dnn"],
+            "notes": ["tn"]
+        },
+        "sells_receipt_items":{
+            "sells_receipt_id":["fk"],
+            "product_id":["fk"],
+            "quantity":["dnn"],
+            "unit_id":["fk"],
+            "selling_price":["dnn",30],
+            "total_selling_price":["dnn",30]
+        },
+        "print_aspect_kind":{
+            "name": ["vcnn",30],
+            "description":["tn"],
+            "_comment":"e.g a list, a text box"
+        },
+        "print_aspect":{
+            "print_aspect_kind_id":["fk"],
+            "name": ["vcnn",30],
+            "description":["tn"],
+            "_comment":"paper type, print color, paper size"
+        },
+        "print_aspect_value":{
+            "print_aspect_id":["fk"],
+            "value": ["vcnn",30],
+            "_comment":"A4, A5, Rotatrim"
+        },
+        "print_package":{
+            "name": ["vcnn",30],
+            "description":["tn"],
+            "selling_price": ["vcnn",30],
+            "_comment":"e.g christmas offer"
+        },
+        "print_package_aspect":{
+            "print_aspect_value_id": ["fk"],
+            "print_package_id": ["fk"],
+            "_comment":"e.g christmas offer: Rotatrim: Paper type"
+        },
+        "print_job_status":{
+            "name": ["vcnn",30],
+            "color": ["vcnn",30],
+            "description":["tn"]
+        },
+        "print_job":{
+            "client_id":["fk"],
+            "print_package_id":["fk"],
+            "print_job_status_id":["fk"],
+            "selling_price": ["vcnn",30],
+            "start_time":["inn",30],
+            "end_time":["inn",30],
+            "notes": ["tn"],
+            "pages":["dnn"],
+            "copies":["dnn"],
+            "print_both_sides":["inn",30,1,"Print both sides of the paper, default is yes/true"],
+            "document_number":["vcnn",30,"__","The receipt number or auto generated number"],
+            "date_time":["inn",30,"__","The date when the client made this order"],
+            "vat":["dnn"],
+            "discount":["dnn"],
+            "by":["vcn",30],
+            "contact":["tn"]
+        },
+        "print_job_service":{
+            "print_job_id":["fk"],
+            "print_service_id":["fk"],
+            "quantity":["dnn"],
+            "selling_price": ["vcnn",30]
+        },
+        "print_job_files":{
+            "print_job_id":["fk"],
+            "file_path":["tn"],
+            "notes": ["tn"]
+        },
+        "print_job_aspect":{
+            "print_job_id":["fk"],
+            "print_aspect_value_id": ["fk"],
+            "print_aspect_value_copy": ["vcnn",30],
+            "print_aspect_id": ["fk"],
+            "print_aspect_copy": ["vcnn",30]
+        },
+        "user":{
+            "name":["vcnn",30],
+            "email":["vcnn",30],
+            "is_owner":["inn",30,0],
+            "password":["vcnn",200],
+            "status":["vcnn",30],
+            "code":["vcnn",30]
+        },
+        "role":{
+            "name": ["vcnn",30],
+            "description":["tn"]
+        },
+        "role_module":{
+            "role_id":["fk"],
+            "module_code": ["vcnn",30],
+            "status":["vcnn",30]
+        },
+        "role_permisiion":{
+            "role_id":["fk"],
+            "permission": ["vcnn",30]
+        },
+        "user_role":{
+            "user_id":["fk"],
+            "role_id":["fk"],
+            "status":["vcnn",30]
+        },
+        "version":{
+            "name": ["vcnn",30]
+        },
+        "log":{
+            "route": ["tn"],
+            "type":["tn"],
+            "crud_operation":["tn"],
+            "table":["tn"],
+            "role":["tn"],
+            "permissions":["tn"],
+            "json_data":["tn"],
+            "section_id":["tn"],
+            "affected_record_guid":["tn"],
+            "description":["tn"]
+        }
+    },
+    "seeds":{
+        "payment_types":[
+            {"name":"cash","description":"payment by cash"}
+        ],
+        "clients":[
+            {   
+                "name":"DEFAULT",
+                "phone_numner":""
+            }
+        ],
+        "sections":[
+            {"name":"print","description":"The printing section"},
+            {"name":"electronics","description":"The electronics section"},
+            {"name":"accessories","description":"The accessories section"}
+        ],
+        "product_categories":[
+            {"name":"DEFAULT","description":"The default store"}
+        ],
+        "product_types":[
+            {"name":"DEFAULT","description":"The default brand"}
+        ],
+        "stores":[
+            {"name":"DEFAULT","description":"The default store"}
+        ],
+        "brands":[
+            {"name":"DEFAULT","description":"The default brand"}
+        ],
+        "manufacturers":[
+            {"name":"DEFAULT","description":"The default manufacturer"}
+        ],
+        "print_aspect_kinds":[
+            {"name":"list","description":"A drop down of values"},
+            {"name":"text","description":"A text box for entering a value"},
+            {"name":"notes","description":"A text box for lots of text"}
+        ],
+        "print_job_statuses":[
+            {"name":"pending","description":"A new job has just been inserted","color":"orange"},
+            {"name":"started","description":"The job is being executed","color":"yellow"},
+            {"name":"finished","description":"The job was finished but document not yet picked or deliverd","color":"lemon"},
+            {"name":"picked","description":"Document was picked","color":"green"},
+            {"name":"cancelled","description":"The job was cancelled","color":"red"}
+        ]
+    },
+    "is_registration_public": false
+}

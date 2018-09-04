@@ -29,6 +29,7 @@ function hive_run($sql,$connection){
     );
     try{  
         if(tools_startsWith($sql,"INSERT") == TRUE){
+            //echo $sql;
             $res = $connection->exec($sql);
             //get the last insert id
             $liid = $connection->lastInsertId();
@@ -329,4 +330,129 @@ function hive_after_segmentation_run($segmentation_run_res,$nectoroid,$structure
     }
     return $res;
 }
+
+//this will create the apllications db
+function hive_run_register_hive($post_nectoroid,$bee){
+    $res = array(null, array());
+
+    //hash the password
+    //adopted from
+    //https://stackoverflow.com/questions/43864379/best-way-encrypt-password-php-in-2017
+    //https://secure.php.net/manual/en/function.password-hash.php
+    //https://secure.php.net/manual/en/function.password-verify.php
+    /*
+        $hash = '$2y$07$BCryptRequires22Chrcte/VlQH0piJtjXl.0t1XkA8pw9dMXTpOq';
+
+        if (password_verify('rasmuslerdorf', $hash)) {
+            echo 'Password is valid!';
+        } else {
+            echo 'Invalid password.';
+        }
+    */
+    $password = password_hash($post_nectoroid["_f_register"]["password"], PASSWORD_DEFAULT);
+    //nyd 
+    //validation
+    $nectoroid = array(
+        "hive" => array(
+            "name" => $post_nectoroid["_f_register"]["name"],
+            "email" => $post_nectoroid["_f_register"]["email"],
+            "phone_number" => $post_nectoroid["_f_register"]["phone_number"],
+            "country" => $post_nectoroid["_f_register"]["country"],
+            "code" => "",
+            "password" => $password,
+            "status" => "active"
+        ) 
+    );
+    //tools_dumpx("nectoroid: ",__FILE__,__LINE__,$nectoroid);
+
+    //db name
+    $hive_name = BEE_GARDEN . "_" . tools_sanitise_name($post_nectoroid["_f_register"]["app_name"]);
+    //tools_dumpx("hive_name: ",__FILE__,__LINE__,$hive_name);
+
+    //nyd
+    //check if hive already exist
+    //if true return the connection to this hive
+    $cnx = hive_run_get_connection(BEE_USER_NAME, BEE_PASSWORD,BEE_SERVER_NAME,$hive_name,false);
+    if(count($cnx[BEE_EI]) == 0 ){
+        //we have a valid connection, no need to recreate hive for this appliaction
+        //just return the connection
+        $connection = $cnx[BEE_RI];
+        $res[BEE_RI] = $connection;
+        return $res;
+    }
+
+    $hrgc_res = hive_run_get_connection(BEE_USER_NAME, BEE_PASSWORD,BEE_SERVER_NAME,"",true);
+    //tools_dump("hrgc_res: ",__FILE__,__LINE__,$hrgc_res);
+    $res[BEE_EI] = array_merge($res[BEE_EI],$hrgc_res[BEE_EI]);
+    $connection = $hrgc_res[BEE_RI];
+    if(count($hrgc_res[BEE_EI]) == 0){
+        $hrch_res = hive_run_create_hive($hive_name,$connection);
+        //var_dump($hrch_res);
+        $res[BEE_EI] = array_merge($res[BEE_EI],$hrch_res[BEE_EI]);
+        //if there are no errors continue to create combs here
+        if(count($hrch_res[BEE_EI]) == 0){
+            //get the connection to the created hive
+            //close connection to test db
+            $connection = null;
+            unset($connection);
+            $hrgc_res = hive_run_get_connection(BEE_USER_NAME, BEE_PASSWORD,BEE_SERVER_NAME,$hive_name,false);
+            $res[BEE_EI] = array_merge($res[BEE_EI],$hrgc_res[BEE_EI]);
+            $connection = $hrgc_res[BEE_RI];
+            if($hrch_res[BEE_RI]["hive_res"] == 1){ //if the hive has just been created
+                $hive_combs = $bee["BEE_HIVE_STRUCTURE"]["combs"];
+                foreach ($hive_combs as $comb_name => $sectures) {
+                    if(tools_startsWith($comb_name,"_")){
+                        continue;
+                    }
+                    $hrss_res = hive_run_secture_sqlization($sectures);
+                    $sections_sqls = $hrss_res[BEE_RI];
+                    $hrct_res =  hive_run_ct($connection,$comb_name, $sections_sqls);
+                    $res[BEE_EI] = array_merge($res[BEE_EI],$hrct_res[BEE_EI]);
+                }
+            }
+        }
+    }
+    if(count($res[BEE_EI])>0){
+        $res[BEE_RI] = false;
+    }else{
+        //post data into hive
+        $brp_res = bee_hive_post($nectoroid,$bee["GARDEN_STRUCTURE"],$bee["BEE_GARDEN_CONNECTION"],0);
+        //tools_dumpx("bee_hive_post ",__FILE__,__LINE__,$brp_res);
+        $res[BEE_RI] = $connection;
+    }
+    //tools_dumpx("hive creation results: ",__FILE__,__LINE__,$res);
+    
+    return $res;
+}
+
+function bee_hive_post($nectoroid,$structure,$connection,$user_id){
+    $res = array(null,array(),$structure);
+    $bsp_res = bee_segmentation_post($nectoroid,$structure,$connection,$user_id);
+    //tools_dumpx("bsp_res: ",__FILE__,__LINE__,$bsp_res);
+    $tree = hive_after_segmentation_post($bsp_res,$structure,$connection);
+    $res[BEE_RI] = $tree[BEE_RI];
+    $res[BEE_EI] = array_merge($res[BEE_EI],$tree[BEE_EI]);
+    return $res; 
+}
+
+function hive_after_segmentation_post($segmentation_run_res,$structure,$connection){
+    $res = array(null,array(),$structure);
+    $sr_res = $segmentation_run_res;
+    //tools_dump("hive segmentation results",__FILE__,__LINE__,$sr_res[BEE_RI]);
+    $res[BEE_EI] = array_merge($res[BEE_EI],$sr_res[BEE_EI]);
+    $res[2] = $sr_res[2];//the structure
+    if(count($sr_res[BEE_EI]) == 0){//when we dont have any errors
+        //convert these queries into raw honey
+        $pr_res = production_post($sr_res[BEE_RI],$connection);
+        //tools_dumpx("@3 production_post res: ",__FILE__,__LINE__,$pr_res);
+        $res[BEE_EI] = array_merge($res[BEE_EI],$pr_res[BEE_EI]);
+        if(count($sr_res[BEE_EI]) == 0){//when we dont have any errors
+            $pr_res = packaging_post($pr_res[BEE_RI],$structure,$connection);
+            $res[BEE_EI] = array_merge($res[BEE_EI],$pr_res[BEE_EI]);
+            $res[BEE_RI] = $pr_res[BEE_RI];
+        }
+    }
+    return $res;
+}
+
 ?>

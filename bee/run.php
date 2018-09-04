@@ -16,6 +16,7 @@
     include("packaging.php"); //production layer
 
     include("tracers.php"); //debuging layer
+    include("register.php"); //debuging layer
 
     define(BEE_IS_IN_PRODUCTION,false);
     define(BEE_GARDEN,tools_get_app_folder_name());
@@ -38,14 +39,74 @@
     define(BEE_WNN,"_w");//where node name
     define(BEE_FNN,"_for");//for node name used in indicating the structure file name
     define(BEE_GARDEN_STUCTURE_FILE_NAME,"bee/_garden.json");
+    define(BEE_HIVE_STUCTURE_FILE_NAME,"_hive.json");
+    define(BEE_DEFAULT_PASSWORD,"qwerty");
     
     $BEE_ERRORS = array();
+
+    //get the hive of the application
+    $tjx_res = tools_jsonify(file_get_contents(BEE_HIVE_STUCTURE_FILE_NAME));
+    $BEE_HIVE_STRUCTURE = $tjx_res[0];
+    $BEE_ERRORS = array_merge($BEE_ERRORS,$tjx_res[BEE_EI]);
+    define(BEE_HIVE_OF_A,$BEE_HIVE_STRUCTURE["hive_of_a"]);
+    $BEE_HIVE_CONNECTION = null;
+
     //the garden structure
     //every hive will have its structure e.g _hive.json
     //but this is the structure of the master hive
     $tj_res = tools_jsonify(file_get_contents(BEE_GARDEN_STUCTURE_FILE_NAME));
     $BEE_GARDEN_STRUCTURE = $tj_res[0]; 
     $BEE_ERRORS = array_merge($BEE_ERRORS,$tj_res[BEE_EI]);
+
+    /*
+    //check if we have a hive of a thing
+    if(!array_key_exists(BEE_HIVE_OF_A,$BEE_GARDEN_STRUCTURE) && BEE_STRICT_HIVE == false ){
+        //insert it into the garden structure
+        $BEE_GARDEN_STRUCTURE[BEE_HIVE_OF_A] = array(
+            "client_id" => array("fk"),
+            "name" => array("vcnn",30),
+            "db_name" => array("vcnn",30),
+            "status" =>  array("vcnn",30),
+            "logo" => array("tn"),
+            "banner" => array("tn"),
+            "country" => array("tn"),
+            "city" => array("tn"),
+            "email" => array("tn"),
+            "phone_number" => array("tn"),
+            "website" => array("tn"),
+            "lat_long" => array("tn"),
+            "location" => array("tn"),
+            "physical_address" => array("tn"),
+            "location" => array("tn"),
+            "postal_address" => array("tn"),
+            "mantra" => array("tn"),
+            "description" => array("tn"),
+        );
+
+        $BEE_GARDEN_STRUCTURE["client"] = array(
+            "name" => array("vcnn",30),
+            "email" => array("vcnn",30),
+            "phone_number" => array("vcnn",30),
+            "country" => array("vcnn",30),
+            "code" => array("vcnn",30),
+            "password" => array("tn"),
+            "status" => array("vcnn",30)
+        );
+
+        $BEE_GARDEN_STRUCTURE["token"] = array(
+            "json_data" => array("tn"),
+            "hashed" => array("tn"),
+            "user_id" => array("inn",30)
+        );
+        $BEE_GARDEN_STRUCTURE["token"][BEE_HIVE_OF_A . "_" . "name"] =  array("vcnn",30);
+        
+        //var_dump($hive_structure);
+        file_put_contents("bee/".$BEE_GARDEN_STRUCTURE[BEE_FNN], json_encode($BEE_GARDEN_STRUCTURE));
+        $tj_res = tools_jsonify(file_get_contents(BEE_GARDEN_STUCTURE_FILE_NAME));
+        $BEE_GARDEN_STRUCTURE = $tj_res[0]; 
+        $BEE_ERRORS = array_merge($BEE_ERRORS,$tj_res[BEE_EI]);
+    }
+    */
 
     $hrege_res = hive_run_ensure_garden_exists($BEE_GARDEN_STRUCTURE);
     $BEE_ERRORS = array_merge($BEE_ERRORS,$hrege_res[BEE_EI]);
@@ -59,5 +120,55 @@
         //tools_reply($hrgg_res[BEE_RI],$BEE_ERRORS,array($BEE_GARDEN_CONNECTION));
         $BEE_GARDEN = $hrgg_res[BEE_RI];
     }
+    $BEE = array(
+        "BEE_HIVE_STRUCTURE" => $BEE_HIVE_STRUCTURE,
+        "GARDEN_STRUCTURE" => $GARDEN_STRUCTURE,
+        "BEE_GARDEN_CONNECTION" => $BEE_GARDEN_CONNECTION,
+        "BEE_HIVE_CONNECTION" => null
+    );
+
+    function bee_run_register_hive($registration_nector,$bee){
+        $hrrh_res = hive_run_register_hive($registration_nector, $bee);
+        return $hrrh_res;
+    }
+
+
+    function bee_run_post($nectoroid,$bee,$user_id){
+        $res = array(null,array(),null);
+
+        //go through the entire nectorid processing
+        //node by node on the root
+        $whole_honey = array();
+        foreach ($nectoroid as $root_node_name => $root_node) {
+            if(tools_startsWith($root_node_name,"_")){
+                continue;
+            }
+            
+            //$srp_res = segmentation_run_process($root_node,$config,$connection);
+            //$res[2] = $srp_res[2];//structure
+            //var_dump($srp_res);
+        }
+
+        $res[BEE_RI] = $whole_honey;
+        $res[2] = $hasr_res[2];
+        return $res; 
+    }
     
+
+
+    //this is the last in this file
+    //register my application
+    //returns the connection to the hive
+    $brrh_res = bee_run_register_hive(array(
+        "_f_register" => array(
+            "app_name" => "dokalase",
+            "name" => "Mr.Gare Lame",
+            "email" => "garelame@gmail.com",
+            "country" => "uganda",
+            "phone_number" => "0703158861",
+            "password" => "qwerty2015"
+        )
+    ), $BEE);
+    $BEE_HIVE_CONNECTION = $brrh_res[BEE_RI];
+    $BEE["BEE_HIVE_CONNECTION"] = $BEE_HIVE_CONNECTION;
 ?>

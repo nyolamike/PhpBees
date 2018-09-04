@@ -294,6 +294,82 @@
     }
 
     
+    function bee_segmentation_post($nectoroid,$structure,$connection, $user_id){
+        $res = array(null,array(),$structure);
+        //go through the entire nectorid processing
+        //node by node on the root
+        $whole_honey = array();
+        foreach ($nectoroid as $root_node_name => $root_node) {
+            if(tools_startsWith($root_node_name,"_")){
+                continue;
+            }
+            $comb_name  = Inflect::singularize($root_node_name);
+            $sects = $structure[$comb_name];
+            $bspp_res = bee_segmentation_post_process($root_node_name, $comb_name, $root_node, $sects, $connection, $user_id);
+            //tools_dumpx("bspp_res: ",__FILE__,__LINE__,$bspp_res);
+            $whole_honey[$root_node_name] = $bspp_res[BEE_RI][$root_node_name];
+            $res[BEE_EI] = array_merge($res[BEE_EI],$bspp_res[BEE_EI]);
+        }
+        $res[BEE_RI] = $whole_honey;
+        return $res;
+    }
 
+    function bee_segmentation_post_process($node_name,$comb_name, $node, $sectures, $connection, $user_id){
+        $res = array(null,array());
+        if($comb_name == $node_name){
+            $bspps_res = bee_segmentation_post_process_sqllize($node_name, $comb_name, $node, $sectures, $user_id);
+            $res[BEE_RI] = $bspps_res[BEE_RI];
+            $res[BEE_EI] = array_merge($res[BEE_EI],$bspps_res[BEE_EI]);
+        }else{
+            $res[BEE_RI] = array();
+            $res[BEE_RI][$node_name] = array();
+            //many insertions into the same comb
+            for ($i=0; $i < count($node); $i++) { 
+                $obj = $node[$i];
+                $bspps_res = bee_segmentation_post_process_sqllize($node_name, $comb_name, $obj, $sectures,$user_id);
+                array_push($res[BEE_RI][$node_name],$bspps_res[BEE_RI][$node_name]);
+                $res[BEE_EI] = array_merge($res[BEE_EI],$bspps_res[BEE_EI]);
+            }
+        }
+        return $res;
+    }
+
+    function bee_segmentation_post_process_sqllize($node_name, $comb_name, $node, $sectures,$user_id){
+        $res = array(null,array());
+        $guid = uniqid() . "-" . rand(1000,2768);
+        $sql = "INSERT INTO " . $comb_name . " ( ";
+        $sections_sql = "";
+        $values_sql = "";
+        foreach ($node as $key => $value) {
+            $sections_sql .= "`".$key."`,";
+            //nyd
+            //apply formating and interpriting
+            //of value according to sectures
+            //also picking default values etc
+            if(is_string($value) ){
+                $prepared = addslashes(strval($value));
+                $values_sql .= " '" . $prepared . "',";
+            }else if(is_int($value) || is_float($value)){
+                $values_sql .= " " . strval($value) . ",";
+            }
+        }
+        $sections_sql   .= " `time_inserted`,";
+        $values_sql     .= " " . time() . ",";
+        $sections_sql   .= " `inserted_by`,";
+        $values_sql     .=  " '" . addslashes($user_id) . "',";
+        $sections_sql   .= " `time_last_modified`,";
+        $values_sql    .=  " " . time() . ",";
+        $sections_sql   .= " `last_modified_by`,";
+        $values_sql     .=  " '" . $user_id . "',";
+        $sections_sql   .= " `is_deleted`,";
+        $values_sql     .=  " 0,";
+        $sections_sql   .= " `guid`";
+        $values_sql     .=  " '". addslashes($guid) ."'";
+        $sql = $sql .  $sections_sql . " ) VALUES (" . $values_sql . " )";
+        $res[BEE_RI] = array();
+        $res[BEE_RI][$node_name] = $sql;
+        return $res;
+    }
+    
     
 ?>

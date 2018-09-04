@@ -5,7 +5,11 @@
     //reads in the state of the garden
     include("bee/run.php");
 
-    echo "<br/>" . BEE_GARDEN;
+    
+    tools_dumpx("BEE",__FILE__,__LINE__,$BEE);
+  
+
+    //tools_reply($BEE,array(),array($BEE_GARDEN_CONNECTION,$BEE_HIVE_CONNECTION));
 
     //setup
     

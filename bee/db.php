@@ -99,6 +99,8 @@ function db_create_db($conn,$hive_name,$show_errors){
 
     function db_tnn($col_name){ return tools_chain($col_name, "`{}` text NOT NULL"); }
 
+    function db_tnn_d($col_name,$default){ return tools_chain($col_name, "`{}` text NOT NULL DEFAULT '".$default."' "); }
+
     function db_tsnn($col_name){ return tools_chain($col_name, "`{}` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP "); }
 
     function db_dtnn($col_name){ return tools_chain($col_name, "`{}`  DATE NOT NULL "); }

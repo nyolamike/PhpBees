@@ -328,4 +328,27 @@
             }
         }
     }
+
+
+    function packaging_post($raw_honeys,$structure,$connection){
+        //tools_dumpx("testing honey",__FILE__,__LINE__,$raw_honeys);
+        $res = array(array(),array(),$structure);
+        $honey = array();
+        foreach ($raw_honeys as $raw_honey_index => $raw_honey_group){
+            $honey[$raw_honey_index] = array();
+            $singular = Inflect::singularize($raw_honey_index);  
+            if($singular == $raw_honey_index){
+                //we have an object here
+                $honey[$raw_honey_index] = intval($raw_honey_group["id"]);
+            }else{
+                //we have an array
+                foreach ($raw_honey_group as $obj) {
+                    array_push($honey[$raw_honey_index],intval($obj["id"]));
+                }
+            } 
+        }
+        //tools_dumpx("kafulaka honey",__FILE__,__LINE__,$honey);
+        $res[BEE_RI] = $honey;
+        return $res;
+    }
 ?>
