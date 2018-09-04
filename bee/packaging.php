@@ -10,7 +10,32 @@
             //the raw_honey_group contains
             //raw_honey, paths_to_clean, children
             $raw_honey = $raw_honey_group["raw_honey"];
-            //tools_dump("children",__FILE__,__LINE__,$raw_honey_group["children"]);
+            //tools_dump("raw_honey_index ",__FILE__,__LINE__,$raw_honey_index );
+
+            //edge case of no results returned as in empty results
+            if(count($raw_honey) == 0){
+                //every index indicates a root node in the nectoroid
+                $ti = 0; //target index
+                foreach ($nectoroid as $rti => $rtv) {//root node index, root node value
+                    if(tools_startsWith($rti, "_")){
+                        continue;
+                    }
+                    if($ti == $raw_honey_index){
+                        $cn  = Inflect::singularize($rti);
+                        if($cn == $rti){
+                            //an object was supposed to be here so we get null
+                            $honey[$rti] = null;
+                        }else{
+                            //an empty array of results
+                            $honey[$rti] = array();
+                        }
+                        //we dont need to mind bout children at this point
+                        break; //we got what we come for here
+                    }
+                    $ti = $ti + 1; //continue the search
+                }
+                continue;
+            }
             foreach ($raw_honey as $row_index => $row_value) {
                 $next_index = true;
                 //tools_dump("row value",__FILE__,__LINE__,$row_value);

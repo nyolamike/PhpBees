@@ -320,7 +320,7 @@ function hive_after_segmentation_run($segmentation_run_res,$nectoroid,$structure
         //tools_dump("@2 sqllization_run res: ",__FILE__,__LINE__,$sr_res[BEE_RI]);
         //convert these queries into raw honey
         $pr_res = production_run($sr_res[BEE_RI],$connection);
-        //tools_dump("@3 production_run res: ",__FILE__,__LINE__,$pr_res[BEE_RI]);
+        //tools_dump("@3 production_run res: ",__FILE__,__LINE__,$pr_res);
         $res[BEE_EI] = array_merge($res[BEE_EI],$pr_res[BEE_EI]);
         if(count($sr_res[BEE_EI]) == 0){//when we dont have any errors
             $pr_res = packaging_run($pr_res[BEE_RI],$nectoroid,$structure,$connection);
@@ -415,9 +415,27 @@ function hive_run_register_hive($post_nectoroid,$bee){
     if(count($res[BEE_EI])>0){
         $res[BEE_RI] = false;
     }else{
+
         //post data into hive
-        $brp_res = bee_hive_post($nectoroid,$bee["GARDEN_STRUCTURE"],$bee["BEE_GARDEN_CONNECTION"],0);
+        $brp_res = bee_hive_post($nectoroid,$bee["BEE_GARDEN_STRUCTURE"],$bee["BEE_GARDEN_CONNECTION"],0);
         //tools_dumpx("bee_hive_post ",__FILE__,__LINE__,$brp_res);
+
+        $bee["BEE_HIVE_CONNECTION"] = $connection;
+        //add the user as a system user
+        $user_nector = array(
+            "user" => array(
+                "name" => $post_nectoroid["_f_register"]["name"],
+                "email" => $post_nectoroid["_f_register"]["email"],
+                "code" => "",
+                "is_owner" => 1,
+                "password" => $password,
+                "status" => "active"
+            )
+        );
+        $brp_res = bee_hive_post($user_nector,$bee["BEE_HIVE_STRUCTURE"]["combs"],$bee["BEE_HIVE_CONNECTION"],0);
+        //give this user the role of super user
+        tools_dumpx("bee_hive_post ",__FILE__,__LINE__,$brp_res);
+        
         $res[BEE_RI] = $connection;
     }
     //tools_dumpx("hive creation results: ",__FILE__,__LINE__,$res);

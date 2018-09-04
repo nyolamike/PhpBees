@@ -351,5 +351,13 @@
             {"name":"cancelled","description":"The job was cancelled","color":"red"}
         ]
     },
-    "is_registration_public": false
+    "is_registration_public": false,
+    "_f_register" : {
+        "app_name" : "dokalase",
+        "name" : "Mr.Gare Lame",
+        "email" : "garelame@gmail.com",
+        "country" : "uganda",
+        "phone_number" : "0703158861",
+        "password" : "qwerty2015"
+    }
 }
