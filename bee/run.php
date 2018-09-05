@@ -124,7 +124,10 @@
         "BEE_HIVE_STRUCTURE" => $BEE_HIVE_STRUCTURE,
         "BEE_GARDEN_STRUCTURE" => $GARDEN_STRUCTURE,
         "BEE_GARDEN_CONNECTION" => $BEE_GARDEN_CONNECTION,
-        "BEE_HIVE_CONNECTION" => null
+        "BEE_HIVE_CONNECTION" => null,
+        "BEE_GARDEN" => $BEE_GARDEN,
+        "BEE_ERRORS" => $BEE_ERRORS,
+        "BEE_JWT_ENCRYPTION" => $BEE_JWT_ENCRYPTION
     );
 
     function bee_run_register_hive($registration_nector,$bee){
@@ -132,17 +135,35 @@
         return $hrrh_res;
     }
 
-
     function bee_run_post($nectoroid,$bee,$user_id){
         $res = array(null,array(),null);
+
+        //the login 
+        //it has to be the only thing in its request
+        if(array_key_exists("_f_login",$nectoroid)){
+            $whole_honey = array();
+            $login_nector = array(
+                "_f_login" => $nectoroid["_f_login"]
+            );
+            $hrl_res = bee_hive_run_login($login_nector, $bee);
+            $whole_honey["_f_login"] = $hrl_res[BEE_RI];
+            $res[BEE_RI] = $whole_honey;
+            $res[BEE_EI] = array_merge($res[BEE_EI],$hrl_res[BEE_EI]);
+            return $res; 
+        }
 
         //go through the entire nectorid processing
         //node by node on the root
         $whole_honey = array();
         foreach ($nectoroid as $root_node_name => $root_node) {
+            
             if(tools_startsWith($root_node_name,"_")){
                 continue;
             }
+            
+            //nyd
+            //check if user is authorised to post data here
+
             
             //$srp_res = segmentation_run_process($root_node,$config,$connection);
             //$res[2] = $srp_res[2];//structure
@@ -154,30 +175,80 @@
         return $res; 
     }
     
+    function bee_run_get($nectoroid,$structure,$connection){
+        $res = array(null,array(),$structure);
+        $sr_res = segmentation_run($nectoroid,$structure,$connection);
+        //tools_dump("@1 segmentation_run res: ",__FILE__,__LINE__,$sr_res[BEE_RI]);
+        $hasr_res = hive_after_segmentation_run($sr_res,$nectoroid,$structure,$connection);
+        $res[BEE_RI] = $hasr_res[BEE_RI];
+        $res[BEE_EI] = array_merge($res[BEE_EI],$hasr_res[BEE_EI]);
+        $res[2] = $hasr_res[2];
+        return $res; 
+    }
 
 
     //this is the last in this file
     //register my application
     //returns the connection to the hive
-    $brrh_res = bee_run_register_hive(array(
-        "_f_register" => $BEE_HIVE_STRUCTURE["_f_register"]
-    ), $BEE);
-    $BEE_HIVE_CONNECTION = $brrh_res[BEE_RI];
-    $BEE["BEE_HIVE_CONNECTION"] = $BEE_HIVE_CONNECTION;
-    //nyd
-    //get in the current state of the garden only if there was creation of new
-    //hive, the current code  below will run allways 
-    if(count($BEE_ERRORS)==0){
-        $hrgg_res = hive_run_get_garden($BEE_GARDEN_STRUCTURE,$BEE_GARDEN_CONNECTION);
-        $BEE_ERRORS = array_merge($BEE_ERRORS,$hrgg_res[BEE_EI]);
-        $GARDEN_STRUCTURE = $hrgg_res[2];
-        //tools_reply($hrgg_res[BEE_RI],$BEE_ERRORS,array($BEE_GARDEN_CONNECTION));
-        $BEE_GARDEN = $hrgg_res[BEE_RI];
-        $BEE = array(
-            "BEE_HIVE_STRUCTURE" => $BEE_HIVE_STRUCTURE,
-            "BEE_GARDEN_STRUCTURE" => $GARDEN_STRUCTURE,
-            "BEE_GARDEN_CONNECTION" => $BEE_GARDEN_CONNECTION,
-            "BEE_HIVE_CONNECTION" => null
-        );
+    if($BEE_HIVE_STRUCTURE["is_registration_public"] == false){
+        $brrh_res = bee_run_register_hive(array(
+            "_f_register" => $BEE_HIVE_STRUCTURE["_f_register"]
+        ), $BEE);
+        $BEE_HIVE_CONNECTION = $brrh_res[BEE_RI];
+        $BEE["BEE_HIVE_CONNECTION"] = $BEE_HIVE_CONNECTION;
+        //nyd
+        //get in the current state of the garden only if there was creation of new
+        //hive, the current code  below will run allways 
+        if(count($BEE_ERRORS)==0){
+            $hrgg_res = hive_run_get_garden($BEE_GARDEN_STRUCTURE,$BEE_GARDEN_CONNECTION);
+            $BEE_ERRORS = array_merge($BEE_ERRORS,$hrgg_res[BEE_EI]);
+            $GARDEN_STRUCTURE = $hrgg_res[2];
+            //tools_reply($hrgg_res[BEE_RI],$BEE_ERRORS,array($BEE_GARDEN_CONNECTION));
+            $BEE_GARDEN = $hrgg_res[BEE_RI];
+            $BEE = array(
+                "BEE_HIVE_STRUCTURE" => $BEE_HIVE_STRUCTURE,
+                "BEE_GARDEN_STRUCTURE" => $GARDEN_STRUCTURE,
+                "BEE_GARDEN_CONNECTION" => $BEE_GARDEN_CONNECTION,
+                "BEE_HIVE_CONNECTION" => $BEE_HIVE_CONNECTION,
+                "BEE_GARDEN" => $BEE_GARDEN,
+                "BEE_ERRORS" => $BEE_ERRORS,
+                "BEE_JWT_ENCRYPTION" => $BEE_JWT_ENCRYPTION
+            );
+        }    
     }
+
+    function bee_handle_requests($bee){
+        $res = array(null,array(),null);
+        $res[BEE_EI] = array_merge($bee["BEE_ERRORS"],$res[BEE_EI]);
+        $method = "get";
+    
+        if($_SERVER["REQUEST_METHOD"] == "GET"){
+            $method = "get";
+        }else if($_SERVER["REQUEST_METHOD"] == "POST"){
+            $temp_postdata = file_get_contents("php://input");
+            //tools_dumpx("temp_postdata",__FILE__,__LINE__,$temp_postdata);
+            $tsji_res = tools_suck_json_into($temp_postdata, array());
+            $res[BEE_EI] = array_merge($tsji_res[BEE_EI],$res[BEE_EI]);
+            if(count()==0){//no errors
+                $postdata = $tsji_res[BEE_RI];
+                //tools_dumpx("postdata",__FILE__,__LINE__,$postdata);
+                $brp_res = bee_run_post($postdata,$bee,0);
+                //tools_dumpx("brp_res post ",__FILE__,__LINE__,$brp_res);
+                $res[BEE_EI] = array_merge($res[BEE_EI],$brp_res[BEE_EI]);
+                $res[BEE_RI] = $brp_res[BEE_RI];
+            }
+        }else if($_SERVER["REQUEST_METHOD"] == "PUT"){
+            $method = "put";
+        }else if($_SERVER["REQUEST_METHOD"] == "DELETE"){
+            $method = "delete";
+        }
+
+        tools_reply($res[BEE_RI],$res[BEE_EI],array(
+            $bee["BEE_GARDEN_CONNECTION"],
+            $bee["BEE_HIVE_CONNECTION"]
+        ));
+    }
+    
+    
+
 ?>

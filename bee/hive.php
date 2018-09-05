@@ -335,6 +335,9 @@ function hive_after_segmentation_run($segmentation_run_res,$nectoroid,$structure
 function hive_run_register_hive($post_nectoroid,$bee){
     $res = array(null, array());
 
+    //db name
+    $hive_name = BEE_GARDEN . "_" . tools_sanitise_name($post_nectoroid["_f_register"]["app_name"]);
+    //tools_dumpx("hive_name: ",__FILE__,__LINE__,$hive_name);
     //hash the password
     //adopted from
     //https://stackoverflow.com/questions/43864379/best-way-encrypt-password-php-in-2017
@@ -355,6 +358,7 @@ function hive_run_register_hive($post_nectoroid,$bee){
     $nectoroid = array(
         "hive" => array(
             "name" => $post_nectoroid["_f_register"]["name"],
+            "hive_name" => $hive_name,
             "email" => $post_nectoroid["_f_register"]["email"],
             "phone_number" => $post_nectoroid["_f_register"]["phone_number"],
             "country" => $post_nectoroid["_f_register"]["country"],
@@ -365,9 +369,7 @@ function hive_run_register_hive($post_nectoroid,$bee){
     );
     //tools_dumpx("nectoroid: ",__FILE__,__LINE__,$nectoroid);
 
-    //db name
-    $hive_name = BEE_GARDEN . "_" . tools_sanitise_name($post_nectoroid["_f_register"]["app_name"]);
-    //tools_dumpx("hive_name: ",__FILE__,__LINE__,$hive_name);
+    
 
     //nyd
     //check if hive already exist
@@ -434,7 +436,7 @@ function hive_run_register_hive($post_nectoroid,$bee){
         );
         $brp_res = bee_hive_post($user_nector,$bee["BEE_HIVE_STRUCTURE"]["combs"],$bee["BEE_HIVE_CONNECTION"],0);
         //give this user the role of super user
-        tools_dumpx("bee_hive_post ",__FILE__,__LINE__,$brp_res);
+        //tools_dumpx("bee_hive_post ",__FILE__,__LINE__,$brp_res);
         
         $res[BEE_RI] = $connection;
     }
@@ -468,6 +470,96 @@ function hive_after_segmentation_post($segmentation_run_res,$structure,$connecti
             $pr_res = packaging_post($pr_res[BEE_RI],$structure,$connection);
             $res[BEE_EI] = array_merge($res[BEE_EI],$pr_res[BEE_EI]);
             $res[BEE_RI] = $pr_res[BEE_RI];
+        }
+    }
+    return $res;
+}
+
+function bee_hive_run_login($post_nectoroid,$bee){
+    $res = array(null, array(),$bee);
+
+    //nyd 
+    //validation
+
+    //hash the password
+    $raw_password = $post_nectoroid["_f_login"]["password"];
+    $password = password_hash($raw_password, PASSWORD_DEFAULT);
+    $email = $post_nectoroid["_f_login"]["email"];
+    $app_name = $post_nectoroid["_f_login"]["app_name"];
+    
+
+    //check if hive exists
+    //we only do this if we have an open hive reistrtion policy
+    if($bee["BEE_HIVE_STRUCTURE"]["is_registration_public"] == true){
+        $hive_name = BEE_GARDEN . "_" . tools_sanitise_name($app_name);
+        //tools_dumpx("hive_name: ",__FILE__,__LINE__,$hive_name);
+        $hive_exists = tools_exists($bee["BEE_GARDEN"],"hives","hive_name",$hive_name);
+        if(!$hive_exists){
+            $res[BEE_EI] = array("Unknown application name " . $app_name);
+            return $res;
+        }
+        //we would then get a connection to this hive
+        $hrgc_res = hive_run_get_connection(BEE_USER_NAME, BEE_PASSWORD,BEE_SERVER_NAME,$hive_name,false);
+        $res[BEE_EI] = array_merge($res[BEE_EI],$hrgc_res[BEE_EI]);
+        $connection = $hrgc_res[BEE_RI];
+        $bee["BEE_HIVE_CONNECTION"] = $connection;
+    }
+
+    //select user with these things
+    $user_nector = array(
+        "users" => array(
+            "_w" => array(
+                array(
+                    array("email","=",$email),
+                    "AND",
+                    array("status","=","active")
+                )
+            )
+        )
+    );
+    $brg_res = bee_run_get($user_nector,$bee["BEE_HIVE_STRUCTURE"]["combs"],$bee["BEE_HIVE_CONNECTION"]);
+    $res[BEE_EI] = array_merge($res[BEE_EI],$brg_res[BEE_EI]);
+    if(count($brg_res[BEE_EI])==0){
+        $users = $brg_res[BEE_RI]["users"];
+        if(count($users)==0){
+            array_push($res[BEE_EI],"Account not found");
+        }else{
+            $foundUser = null;
+            foreach ($users as $user) {
+                if(password_verify($raw_password, $user["password"])) {
+                    $foundUser = $user;
+                    break;
+                }
+            }
+            if($foundUser == null){
+                array_push($res[BEE_EI],"Incorrect email or password");
+            }else{
+                //generate a token for this user
+                $token = new Emarref\Jwt\Token();
+
+                // Standard claims are supported
+                $token->addClaim(new Emarref\Jwt\Claim\Audience(['audience_1', 'audience_2']));
+                $token->addClaim(new Emarref\Jwt\Claim\Expiration(new \DateTime('1440 minutes'))); //a day
+                $token->addClaim(new Emarref\Jwt\Claim\IssuedAt(new \DateTime('now')));
+                $token->addClaim(new Emarref\Jwt\Claim\Issuer('your_issuer'));
+                $token->addClaim(new Emarref\Jwt\Claim\JwtId('qwerty'));
+                $token->addClaim(new Emarref\Jwt\Claim\NotBefore(new \DateTime('now')));
+                $token->addClaim(new Emarref\Jwt\Claim\Subject('api'));
+
+                // Custom claims are supported
+                $token->addClaim(new Emarref\Jwt\Claim\PublicClaim('user', $foundUser));
+                //nyd
+                //add roles etc
+                $jwt = new Emarref\Jwt\Jwt();
+                $ect = $bee["BEE_JWT_ENCRYPTION"];
+                $serializedToken = $jwt->serialize($token, $ect);
+
+                $res[BEE_RI] = array(
+                    "_f_login" => array(
+                        "token" => $serializedToken
+                    )
+                );
+            }
         }
     }
     return $res;

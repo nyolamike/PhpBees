@@ -86,6 +86,23 @@
         return array($temp,(strlen($msg)>0?array($msg):array()));
     }
 
+    function tools_suck_json_into($json_string, $array_to_be_filled){
+        if (strlen($json_string) > 0) {
+            $temp_e = tools_jsonify($json_string);
+            //tools_dumpx("temp_e",__FILE__,__LINE__,$temp_e);
+            if(count($temp_e[BEE_EI]) == 0){//no errors
+                $temp = $temp_e[0];
+                foreach ($temp as $prop => $value) {
+                    $array_to_be_filled[$prop] = $value;
+                }
+                return array($array_to_be_filled,array());
+            }else{
+                return array(null,$temp_e[BEE_EI]);
+            }
+        }else{
+            return array(null,array("No json string provided to the sucking process"));
+        }
+    }
     
     function tools_sanitise_name($val){
         //nyd
@@ -93,38 +110,6 @@
         $str = preg_replace("/[^A-Za-z0-9 ]/", '', strval($val));
         $str = strtolower(str_replace(" ", "_", $str));
         return $str;
-    }
-   
-
-    
-
-    function tools_create($node){
-        $res = array(null,array());
-        $res_data = array();
-        $errors = array();
-        if(array_key_exists("_hive",$node)){
-            
-            //nyd
-            //authorised to access this resource
-
-            //creating a new hive for this user in this garden
-            //nyd
-            //validate data
-            //hive name has to be unique
-            //email has to be unique etc
-            //and phone number
-
-            $res_data["_hive"] = $node["_hive"];
-            $hive_name = strtolower($node["_hive"]);
-            //_using what
-        }
-
-        $res[0] = $res_data;
-        if(count($errors)>0){
-            $res[0] = null; //nullify results if there are any errors
-            $res[1] = $errors;
-        }
-        return $res;
     }
 
     function tools_respond($data,$errors){
@@ -155,5 +140,16 @@
         $res =  json_encode($data);
         echo $res;
 		exit(0);
+    }
+
+    //
+    function tools_exists($haystack,$haystack_key,$niddle_key,$niddle_vlue){
+        $list = $haystack[$haystack_key];
+        foreach ($list as $index => $obj) {
+            if($obj[$niddle_key] == $niddle_vlue ){
+                return true;
+            }
+        }    
+        return false;
     }
 ?>
