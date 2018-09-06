@@ -464,7 +464,7 @@ function hive_after_segmentation_post($segmentation_run_res,$structure,$connecti
     if(count($sr_res[BEE_EI]) == 0){//when we dont have any errors
         //convert these queries into raw honey
         $pr_res = production_post($sr_res[BEE_RI],$connection);
-        //tools_dumpx("@3 production_post res: ",__FILE__,__LINE__,$pr_res);
+        //tools_dump("@3 production_post res: ",__FILE__,__LINE__,$pr_res);
         $res[BEE_EI] = array_merge($res[BEE_EI],$pr_res[BEE_EI]);
         if(count($sr_res[BEE_EI]) == 0){//when we dont have any errors
             $pr_res = packaging_post($pr_res[BEE_RI],$structure,$connection);

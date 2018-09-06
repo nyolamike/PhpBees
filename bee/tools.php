@@ -19,14 +19,24 @@
         }
     }
 
-    function tools_dump($mark,$file,$line,$item){
-        echo "<br/><br/>...............................<br/>Start: ".$mark." <br/>In: &nbsp;&nbsp;&nbsp;&nbsp;" . $file . " <br/>On: &nbsp;&nbsp;&nbsp;" . $line ."<br/>...............................<br/><pre><code>";
-        var_dump($item);
-        echo "</code></pre><br/>...............................<br/>End: ".$mark."<br/>...............................<br/><br/>";
+    function tools_dump($mark,$file,$line,$item,$k=null){
+        $can_dump = true;
+        if($k != null){
+            $can_dump = false;
+            if(is_array($item) && array_key_exists($k,$item)){
+                $can_dump = true;
+            }
+        }
+
+        if($can_dump){
+            echo "<br/><br/>...............................<br/>Start: ".$mark." <br/>In: &nbsp;&nbsp;&nbsp;&nbsp;" . $file . " <br/>On: &nbsp;&nbsp;&nbsp;" . $line ."<br/>...............................<br/><pre><code>";
+            var_dump($item);
+            echo "</code></pre><br/>...............................<br/>End: ".$mark."<br/>...............................<br/><br/>";
+        }
     }
 
-    function tools_dumpx($mark,$file,$line,$item){
-        tools_dump($mark,$file,$line,$item);
+    function tools_dumpx($mark,$file,$line,$item,$k=null){
+        tools_dump($mark,$file,$line,$item,$k=null);
         exit(0);
     }
 
@@ -141,6 +151,8 @@
         echo $res;
 		exit(0);
     }
+
+    
 
     //
     function tools_exists($haystack,$haystack_key,$niddle_key,$niddle_vlue){

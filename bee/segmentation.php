@@ -4,6 +4,8 @@
     //into sql_segments
     function segmentation_run($nectoroid,$structure,$connection){
         $res = array(null,array(),$structure);
+
+        //tools_dump("nectoroid",__FILE__,__LINE__,$nectoroid,"unit_conversions");
         //go through the entire nectorid processing
         //node by node on the root
         $whole_honey = array();
@@ -20,6 +22,7 @@
                 "is_child_segmentation_run" => false
             );
             $srp_res = segmentation_run_process($root_node,$config,$connection);
+            //tools_dump("srp_res",__FILE__,__LINE__,$srp_res);
             $res[2] = $srp_res[2];//structure
             $whole_honey[$root_node_name] = $srp_res[BEE_RI];
             $res[BEE_EI] = array_merge($res[BEE_EI],$srp_res[BEE_EI]);
@@ -99,7 +102,16 @@
             //detect parent
             //you must be singular and have parent_id column in this table
             $singular  = Inflect::singularize($node_key);
-            $parent_id_exists = array_key_exists($singular."_id", $hive_structure[$comb_name]);
+            $SWO = tools_startsWith($singular,"other_");
+            $ON = ($SWO)?str_replace("other_","",$singular):$singular;
+            $parent_id_exists = array_key_exists(
+                (($SWO)?$ON:$singular)."_id", 
+                $hive_structure[$comb_name]
+            );
+            // if($comb_name =="unit" || true){
+            //     tools_dump("parent_id_exists",__FILE__,__LINE__,$hive_structure[$comb_name]);
+            //     tools_dump($singular,__FILE__,__LINE__,$singular);
+            // }
             if($node_key == $singular && $parent_id_exists ){
                 $s_res = segmentation_run_process($node_key_value,array(
                     "path" => $path,
@@ -114,7 +126,13 @@
                 $res[BEE_EI] = array_merge($res[BEE_EI], $s_res[BEE_EI]);
                 $hive_structure = $s_res[2];
                 $res[BEE_RI]["temp_children"] =  $s_res[BEE_RI]["temp_children"];
-                $res[BEE_RI]["temp_inner_join_sql"] = " INNER JOIN ".$singular." ON ".$comb_name.".".$singular."_id=".$singular.".id " . $s_res[BEE_RI]["temp_inner_join_sql"];
+
+                
+                if($SWO){
+                    $res[BEE_RI]["temp_inner_join_sql"] = " INNER JOIN ".$ON." AS ". $singular ." ON ".$comb_name.".".$singular."_id=".$singular.".id " . $res[BEE_RI]["temp_inner_join_sql"];
+                }else{
+                    $res[BEE_RI]["temp_inner_join_sql"] = " INNER JOIN ".$singular." ON ".$comb_name.".".$singular."_id=".$singular.".id " . $res[BEE_RI]["temp_inner_join_sql"];
+                }
                 continue;
             }
 
@@ -122,7 +140,7 @@
             //detect children
             //singular must be a table in the structure with table_id as parent column
             $plural  = Inflect::pluralize($node_key);
-            $child_id_exists = array_key_exists($comb_name."_id", $hive_structure[$singular]);
+            $child_id_exists = array_key_exists($comb_name."_id", $hive_structure[(($SWO)?$ON:$singular)]);
             if($node_key == $plural && $child_id_exists ){
                 //echo "foo";
                 array_push($res[BEE_RI]["temp_children"],$path.BEE_SEP.$node_key);
@@ -148,6 +166,8 @@
             array_push($res[BEE_EI],"Invalid path: " . $path.BEE_SEP.$node_key);
 
         }
+
+        //tools_dumpx("detect",__FILE__,__LINE__,$node,"unit");
 
         
         if(count($res[BEE_EI])>0){
@@ -183,10 +203,13 @@
                 array_push($sections,$temp_sec);
             }
         }
+
+        $SWO = tools_startsWith($node_name,"other_");
+        $ON = ($SWO)?str_replace("other_","",$node_name):$node_name;
     
         //if comb does not exist then it will be created on this connection
         //when the setting of BEE_STRICT_HIVE == false;
-        if(!array_key_exists($comb_name,$hive_structure) && BEE_STRICT_HIVE == false ){
+        if(!array_key_exists($comb_name,$hive_structure) && BEE_STRICT_HIVE == false && !$SWO ){
             //create this table
             $hrsq_res = hive_run_secture_sqlization($sections);
             $hrc_res = hive_run_ct($connection, $comb_name, $hrsq_res[BEE_RI]);
@@ -199,7 +222,7 @@
             //var_dump($hive_structure);
             file_put_contents("bee/".$hive_structure[BEE_FNN], json_encode($hive_structure));
         }
-        if(!array_key_exists($comb_name,$hive_structure) && BEE_STRICT_HIVE == true ){
+        if(!array_key_exists($comb_name,$hive_structure) && BEE_STRICT_HIVE == true && !$SWO ){
             //we have an error here because the comb doesnot exist and we cannot create one
             array_push($errors,"Comb " . $comb_name . " does not exist");
             return array("",$errors,$hive_structure);
@@ -207,7 +230,8 @@
     
         //this if 
         //must come after checking the existence of the comb above
-        $sectures = $hive_structure[$comb_name];
+
+        $sectures = $hive_structure[(($SWO)? $ON : $comb_name)];
         if($node == "*" || (is_array($node) && count($node) == 1 && trim($node[0]) == "*" )  ){
             $sections = array("id");
             //get all the cols for this table including the id
@@ -242,7 +266,7 @@
             if(tools_startsWith($section_name,"_")){
                 continue; //just in case anything wired went through
             }
-            if(!array_key_exists($section_name,$sectures) && $section_name != "id" && BEE_STRICT_HIVE == false ){
+            if(!array_key_exists($section_name,$sectures) && $section_name != "id" && BEE_STRICT_HIVE == false && !$SWO ){
                 //alter table here and structure
                 $section_sql = hive_run_tn($section_name); 
                 $hra_res = hive_run_ac($connection,$section_name, $section_sql);
