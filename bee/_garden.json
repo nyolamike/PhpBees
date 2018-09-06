@@ -122,7 +122,7 @@
         "hive_id": [
             "fk"
         ],
-        "time_to_expire": "inn:30",
+        "time_to_expire": ["inn","30"],
         "code": [
             "vcnn",
             30

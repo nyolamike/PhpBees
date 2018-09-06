@@ -3,6 +3,27 @@
     error_reporting(E_ALL ^ E_WARNING);
     /*end error reporting*/
 
+    /*cors */
+    // Allow from any origin
+    if (isset($_SERVER['HTTP_ORIGIN'])) {
+        header("Access-Control-Allow-Origin: {$_SERVER['HTTP_ORIGIN']}");
+        header('Access-Control-Allow-Credentials: true');
+        header('Access-Control-Max-Age: 86400');    // cache for 1 day
+    }
+    // Access-Control headers are received during OPTIONS requests
+    if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+
+        if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_METHOD'])){
+            header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");      
+        }   
+
+        if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS'])){
+            header("Access-Control-Allow-Headers: {$_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']}");
+        }
+        exit();
+    }
+    /*end cors */
+
     require __DIR__ . '/vendor/autoload.php';
     use Emarref\Jwt\Claim;
 
@@ -151,6 +172,7 @@
             $res[BEE_EI] = array_merge($res[BEE_EI],$hrl_res[BEE_EI]);
             return $res; 
         }
+        //tools_dumpx("here in post",__FILE__,__LINE__,$nectoroid);
 
         //go through the entire nectorid processing
         //node by node on the root
@@ -160,25 +182,31 @@
             if(tools_startsWith($root_node_name,"_")){
                 continue;
             }
-            
+            //tools_dumpx("here in post foreach loop",__FILE__,__LINE__,$root_node);
             //nyd
             //check if user is authorised to post data here
-
-            
-            //$srp_res = segmentation_run_process($root_node,$config,$connection);
-            //$res[2] = $srp_res[2];//structure
-            //var_dump($srp_res);
+            $nector = array();
+            $nector[$root_node_name] = $root_node;
+            $brp_res = bee_hive_post(
+                $nector,
+                $bee["BEE_HIVE_STRUCTURE"]["combs"],
+                $bee["BEE_HIVE_CONNECTION"],
+                $bee["BEE_USER"]["id"]
+            );
+            //tools_dumpx("here brp_res",__FILE__,__LINE__,$brp_res);
+            $whole_honey[$root_node_name] = $brp_res[BEE_RI][$root_node_name];
+            $res[BEE_EI] = array_merge($res[BEE_EI],$brp_res[BEE_EI]);
         }
 
         $res[BEE_RI] = $whole_honey;
-        $res[2] = $hasr_res[2];
+        $res[2] = $bee;
         return $res; 
     }
     
     function bee_run_get($nectoroid,$structure,$connection){
         $res = array(null,array(),$structure);
         $sr_res = segmentation_run($nectoroid,$structure,$connection);
-        //tools_dump("@1 segmentation_run res: ",__FILE__,__LINE__,$sr_res[BEE_RI]);
+        //tools_dumpx("@1 segmentation_run res: ",__FILE__,__LINE__,$sr_res[BEE_RI]);
         $hasr_res = hive_after_segmentation_run($sr_res,$nectoroid,$structure,$connection);
         $res[BEE_RI] = $hasr_res[BEE_RI];
         $res[BEE_EI] = array_merge($res[BEE_EI],$hasr_res[BEE_EI]);
@@ -221,18 +249,72 @@
         $res = array(null,array(),null);
         $res[BEE_EI] = array_merge($bee["BEE_ERRORS"],$res[BEE_EI]);
         $method = "get";
+
+        $token_string = null;
+        $headers = apache_request_headers();
+        if($headers == null){
+            return null;
+        }
+        if(isset($headers["Authorization"]) && stripos($headers["Authorization"],"Bearer ") > -1){
+            $token_string = str_ireplace("Bearer ","",$headers["Authorization"]);
+        }else if(isset($headers["authorization"]) && stripos($headers["authorization"],"Bearer ") > -1){
+            $token_string = str_ireplace("Bearer ","",$headers["Authorization"]);
+        }else if(isset($headers["AUTHORIZATION"]) && stripos($headers["authorization"],"Bearer ") > -1){
+            $token_string = trim(str_ireplace("Bearer ","",$headers["Authorization"]));
+        }
+        //tools_dumpx("token_string",__FILE__,__LINE__,$headers["Authorization"]);
+        if($token_string != null){
+            $jwt = new Emarref\Jwt\Jwt();
+            $token = $jwt->deserialize($token_string);
+            $context = new Emarref\Jwt\Verification\Context($bee["BEE_JWT_ENCRYPTION"]);
+            $context->setAudience('audience_1');
+            $context->setIssuer('your_issuer');
+            $context->setSubject('api');
+            try {
+                $jwt->verify($token, $context);
+                $payload = $token->getPayload();
+                $current_user = $payload->findClaimByName("user")->getValue();
+                //tools_dumpx("foo",__FILE__,__LINE__,$current_user);
+                $bee["BEE_USER"] = $current_user;
+                //get connection
+                
+            } catch (Emarref\Jwt\Exception\VerificationException $e) {
+                $msg = $e->getMessage();
+                array_push($res[BEE_EI],$msg);
+            }
+                
+
+        }
+        
     
         if($_SERVER["REQUEST_METHOD"] == "GET"){
-            $method = "get";
+            if(isset($_GET["q"])){
+                $query_base64 = $_GET["q"];
+                //tools_dumpx("_GET",__FILE__,__LINE__,$query_base64);
+                $query = base64_decode($query_base64);
+                //tools_dump("query",__FILE__,__LINE__,$query);
+                $tsji_res = tools_suck_json_into($query, array());
+                $res[BEE_EI] = array_merge($tsji_res[BEE_EI],$res[BEE_EI]);
+                if(count($res[BEE_EI])==0){//no errors
+                    $querydata = $tsji_res[BEE_RI];
+                    //tools_dumpx("querydata",__FILE__,__LINE__,$querydata);
+                    $brp_res = bee_run_get($querydata,$bee["BEE_HIVE_STRUCTURE"]["combs"],$bee["BEE_HIVE_CONNECTION"]);
+                    //tools_dumpx("brp_res get ",__FILE__,__LINE__,$brp_res);
+                    $res[BEE_EI] = array_merge($res[BEE_EI],$brp_res[BEE_EI]);
+                    $res[BEE_RI] = $brp_res[BEE_RI];
+                }
+            }else{
+                //there is nothing to process
+            }
         }else if($_SERVER["REQUEST_METHOD"] == "POST"){
             $temp_postdata = file_get_contents("php://input");
             //tools_dumpx("temp_postdata",__FILE__,__LINE__,$temp_postdata);
             $tsji_res = tools_suck_json_into($temp_postdata, array());
             $res[BEE_EI] = array_merge($tsji_res[BEE_EI],$res[BEE_EI]);
-            if(count()==0){//no errors
+            if(count($res[BEE_EI])==0){//no errors
                 $postdata = $tsji_res[BEE_RI];
                 //tools_dumpx("postdata",__FILE__,__LINE__,$postdata);
-                $brp_res = bee_run_post($postdata,$bee,0);
+                $brp_res = bee_run_post($postdata,$bee,$bee["BEE_USER"]["id"]);
                 //tools_dumpx("brp_res post ",__FILE__,__LINE__,$brp_res);
                 $res[BEE_EI] = array_merge($res[BEE_EI],$brp_res[BEE_EI]);
                 $res[BEE_RI] = $brp_res[BEE_RI];

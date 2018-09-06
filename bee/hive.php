@@ -490,8 +490,8 @@ function bee_hive_run_login($post_nectoroid,$bee){
 
     //check if hive exists
     //we only do this if we have an open hive reistrtion policy
+    $hive_name = BEE_GARDEN . "_" . tools_sanitise_name($app_name);
     if($bee["BEE_HIVE_STRUCTURE"]["is_registration_public"] == true){
-        $hive_name = BEE_GARDEN . "_" . tools_sanitise_name($app_name);
         //tools_dumpx("hive_name: ",__FILE__,__LINE__,$hive_name);
         $hive_exists = tools_exists($bee["BEE_GARDEN"],"hives","hive_name",$hive_name);
         if(!$hive_exists){
@@ -503,6 +503,12 @@ function bee_hive_run_login($post_nectoroid,$bee){
         $res[BEE_EI] = array_merge($res[BEE_EI],$hrgc_res[BEE_EI]);
         $connection = $hrgc_res[BEE_RI];
         $bee["BEE_HIVE_CONNECTION"] = $connection;
+    }
+
+    $hive_exists = tools_exists($bee["BEE_GARDEN"],"hives","hive_name",$hive_name);
+    if(!$hive_exists){
+        $res[BEE_EI] = array("Unknown application name " . $app_name);
+        return $res;
     }
 
     //select user with these things
@@ -548,6 +554,7 @@ function bee_hive_run_login($post_nectoroid,$bee){
 
                 // Custom claims are supported
                 $token->addClaim(new Emarref\Jwt\Claim\PublicClaim('user', $foundUser));
+                $token->addClaim(new Emarref\Jwt\Claim\PublicClaim('app_name',$app_name));
                 //nyd
                 //add roles etc
                 $jwt = new Emarref\Jwt\Jwt();
