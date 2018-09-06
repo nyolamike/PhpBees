@@ -205,8 +205,9 @@
     
     function bee_run_get($nectoroid,$structure,$connection){
         $res = array(null,array(),$structure);
+        //tools_dump("@0 == ",__FILE__,__LINE__,$nectoroid);
         $sr_res = segmentation_run($nectoroid,$structure,$connection);
-        //tools_dumpx("@1 segmentation_run res: ",__FILE__,__LINE__,$sr_res[BEE_RI]);
+        //tools_dump("@1 segmentation_run res: ",__FILE__,__LINE__,$nectoroid);
         $hasr_res = hive_after_segmentation_run($sr_res,$nectoroid,$structure,$connection);
         $res[BEE_RI] = $hasr_res[BEE_RI];
         $res[BEE_EI] = array_merge($res[BEE_EI],$hasr_res[BEE_EI]);

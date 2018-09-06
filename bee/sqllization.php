@@ -13,6 +13,7 @@
                 $sql = $sql . " WHERE " . $where_sql;
                 //tools_dump("sql for " . $root_node_name,__FILE__,__LINE__,$sql);
             }
+            //tools_dump("sql for ",__FILE__,__LINE__,$sql);
             //nyd
             //walk backwards to include code to generate paths to clean
             //and delete this if below
