@@ -10,7 +10,25 @@
         //node by node on the root
         $whole_honey = array();
         foreach ($nectoroid as $root_node_name => $root_node) {
+            //tools_dump("@: ",__FILE__,__LINE__,$root_node_name);
             if(tools_startsWith($root_node_name,"_")){
+                //extractions
+                if(tools_startsWith($root_node_name,"_xtu_")){
+                    if(!array_key_exists("xtu")){
+                        $whole_honey["xtu"] = array();
+                    }
+                    $nn = str_replace("_xtu_","",$root_node_name);
+                    $whole_honey["xtu"][$nn] = $root_node;
+
+                    // //tools_dumpx("@root_node: ",__FILE__,__LINE__,$root_node);
+                    // $sr_res = segmentation_run($root_node,$structure,$connection);
+                    // //tools_dumpx("@1xtu res: ",__FILE__,__LINE__,$sr_res[BEE_RI]);
+                    // $hasr_res = hive_after_segmentation_run($sr_res,$root_node,$structure,$connection);
+                    // $res[BEE_EI] = array_merge($res[BEE_EI],$hasr_res[BEE_EI]);
+                    // //tools_dumpx("@2xtu res: ",__FILE__,__LINE__,$hasr_res[BEE_RI]);
+                    // $honey_to_extract = $hasr_res[BEE_RI];
+                    // $whole_honey[$node_name] = $honey_to_extract;
+                }
                 continue;
             }
             $config = array(
@@ -66,6 +84,12 @@
         }
         //process the node
         foreach ($node as $node_key => $node_key_value) {
+
+            if($node_key == "_at"){
+                //this is used for extractions so ignore it and move on
+                continue;
+            }
+
             //echo $node_name . " <br/>";
             if($node_key == BEE_ANN){
                 //string * means get everything
@@ -112,6 +136,7 @@
             //     tools_dump("parent_id_exists",__FILE__,__LINE__,$hive_structure[$comb_name]);
             //     tools_dump($singular,__FILE__,__LINE__,$singular);
             // }
+            //tools_dump("parent segmentation",__FILE__,__LINE__,array($node_key, $singular, $parent_id_exists));
             if($node_key == $singular && $parent_id_exists ){
                 $s_res = segmentation_run_process($node_key_value,array(
                     "path" => $path,
@@ -129,9 +154,15 @@
 
                 
                 if($SWO){
-                    $res[BEE_RI]["temp_inner_join_sql"] = " INNER JOIN ".$ON." AS ". $singular ." ON ".$comb_name.".".$singular."_id=".$singular.".id " . $res[BEE_RI]["temp_inner_join_sql"];
+                    $res[BEE_RI]["temp_inner_join_sql"] .= " INNER JOIN ".$ON." AS ". $singular ." ON ".$comb_name.".".$singular."_id=".$singular.".id " . $s_res[BEE_RI]["temp_inner_join_sql"];
                 }else{
-                    $res[BEE_RI]["temp_inner_join_sql"] = " INNER JOIN ".$singular." ON ".$comb_name.".".$singular."_id=".$singular.".id " . $res[BEE_RI]["temp_inner_join_sql"];
+                    $res[BEE_RI]["temp_inner_join_sql"] .= " INNER JOIN ".$singular." ON ".$comb_name.".".$singular."_id=".$singular.".id " . $s_res[BEE_RI]["temp_inner_join_sql"];
+                }
+                if($singular == "unit"){
+                    //tools_dump("print_aspect_kindfooo",__FILE__,__LINE__,$res[BEE_RI]["temp_inner_join_sql"]);
+                }
+                if($singular == "other_unit"){
+                    //tools_dump("print_aspect_kindfaaaaaa",__FILE__,__LINE__,$res[BEE_RI]["temp_inner_join_sql"]);
                 }
                 continue;
             }

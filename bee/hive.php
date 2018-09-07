@@ -316,6 +316,14 @@ function hive_after_segmentation_run($segmentation_run_res,$nectoroid,$structure
     $res[BEE_EI] = array_merge($res[BEE_EI],$sr_res[BEE_EI]);
     $res[2] = $sr_res[2];//the structure
     if(count($sr_res[BEE_EI]) == 0){//when we dont have any errors
+        //remove any extraction instructons id any
+        $xtu = array();
+        if(array_key_exists("xtu",$sr_res[BEE_RI])){
+            //tools_dump("xtu added",__FILE__,__LINE__,$sr_res[BEE_RI]);
+            $xtu = $sr_res[BEE_RI]["xtu"];
+            unset($sr_res[BEE_RI]["xtu"]);
+            //tools_dump("xtu removed",__FILE__,__LINE__,$sr_res[BEE_RI]);
+        }
         $sr_res = sqllization_run($sr_res[BEE_RI]);
         //tools_dump("@2 sqllization_run res: ",__FILE__,__LINE__,$sr_res[BEE_RI]);
         //convert these queries into raw honey
@@ -326,6 +334,190 @@ function hive_after_segmentation_run($segmentation_run_res,$nectoroid,$structure
             $pr_res = packaging_run($pr_res[BEE_RI],$nectoroid,$structure,$connection);
             $res[BEE_EI] = array_merge($res[BEE_EI],$pr_res[BEE_EI]);
             $res[BEE_RI] = $pr_res[BEE_RI];
+        }
+        //$node_name = str_replace("_xtu_","",$root_node_name);
+        //process extractions of xtu
+        if(!empty($xtu)){
+            foreach ($xtu as $xtu_key => $xtu_path) {
+                $singular_xtu_key = Inflect::singularize($xtu_key); 
+
+                $xtracted = array();
+                $xtu_path_parts = explode(".",$xtu_path);
+                $value_source = $res[BEE_RI];//a reference to extract the final value
+                $prev = "none"; //what is the nature of the previous
+                for ($i=0; $i < count($xtu_path_parts); $i++) { 
+                    $xtu_path_part = $xtu_path_parts[$i];
+                    $singular_xtu = Inflect::singularize($xtu_path_part); 
+                    //detect the last path
+                    if($i+1 == count($xtu_path_parts)){
+                        if($singular_xtu == $xtu_path_part){
+                            //its an object
+                            if($prev == "none"){
+                                //the reference is as an object at this point
+                                //there is an object we are looking for here
+                                $temp_obj = $value_source[$xtu_path_part];
+                                $xtracted = $temp_obj;
+                            }elseif($prev == "object"){
+                                //the reference is as an object at this point
+                                //there is an object we are looking for here
+                                $temp_obj = $value_source[$xtu_path_part];
+                                $xtracted = $temp_obj;
+                            }elseif($prev == "array"){
+                                //reference is an array
+                                $temp_sov_keys = array(); //we dont need duplicates
+                                foreach ($value_source as $sovObj) {
+                                    $sov = $sovObj[$xtu_path_part];
+                                    if(!in_array($sov["id"],$temp_sov_keys)){
+                                        array_push($temp_sov_keys,$sov["id"]);
+                                        array_push($xtracted,$sov);
+                                    }
+                                }
+                            }
+                        }else{
+                            //its an array. period
+                            if($prev == "none"){
+                                //the reference is as an array of objects at his point
+                                //thevery object in the array has an attibute of the 
+                                //target which is what we are looking for
+                                //we are just beginig our travel
+                                $temp_array = $value_source[$xtu_path_part];
+                                $temp_sov_keys = array(); //we dont need duplicates
+                                foreach ($temp_array as $sov) {
+                                    if(!in_array($sov["id"],$temp_sov_keys)){
+                                        array_push($temp_sov_keys,$sov["id"]);
+                                        array_push($xtracted,$sov);
+                                    }
+                                }
+                                $prev = "none";
+                            }elseif($prev == "object"){
+                                //the refrence is an object, which has an array of these objects
+                                //at this location
+                                $temp_array = $value_source[$xtu_path_part];
+                                $temp_sov_keys = array(); //we dont need duplicates
+                                foreach ($temp_array as $sov) {
+                                    if(!in_array($sov["id"],$temp_sov_keys)){
+                                        array_push($temp_sov_keys,$sov["id"]);
+                                        array_push($xtracted,$sov);
+                                    }
+                                }
+                                $prev = "none";
+                            }elseif($prev == "array"){
+                                $temp_sov_keys = array(); //we dont need duplicates
+                                foreach ($value_source as $sovObj) {
+                                    $answer_array = $sovObj[$xtu_path_part];
+                                    //our answer is an array of objects
+                                    //we take only unique object of this array
+                                    foreach ($answer_array as $sov) {
+                                        if(!in_array($sov["id"],$temp_sov_keys)){
+                                            array_push($temp_sov_keys,$sov["id"]);
+                                            array_push($xtracted,$sov);
+                                        }
+                                    }
+                                }
+                                $prev = "none";
+                            }
+                        }
+                        $prev = "none";
+                        continue;
+                    }
+
+                    if($singular_xtu == $xtu_path_part){
+                        //this node is an object
+                        if($prev == "none"){
+                            //our travel has just began
+                            //the value source contains an object at this location
+                            $temp_array = $value_source[$xtu_path_part];
+                            //that object is the root to our values
+                            $value_source = $temp_array;
+                            $prev = "object";
+                        }elseif($prev == "object"){
+                            //the current ref is an object which has an object at this location
+                            //that object is the root to sov
+                            $temp_array = $value_source[$xtu_path_part];
+                            //that object is the root to our values
+                            $value_source = $temp_array;
+                            $prev = "object";
+                        }elseif($prev == "array"){
+                            //the refrence is an array of objects
+                            //each object contains an object at this location as the source
+                            //of values sov
+                            $temp_sov = array();
+                            $temp_sov_keys = array(); //we dont need duplicates
+                            foreach ($value_source as $sovHolder) {
+                                $sov = $sovHolder[$xtu_path_part];
+                                if(!array_key_exists($sov["id"],$temp_sov_keys)){
+                                    array_push($temp_sov_keys,$sov["id"]);
+                                    array_push($temp_sov,$sov);
+                                }
+                            }
+                            //the refrence now becomes the new source of truth
+                            $value_source = $temp_sov;
+                            $prev = "array";//now out sov is an array of objects
+                        }
+                    }else{
+                        //this node is an array
+                        if($prev == "none"){
+                            //we are just beginig our travel
+                            //the value source contains an array at this location
+                            $temp_array = $value_source[$xtu_path_part];
+                            //every object in this array is a potential source of the value
+                            //we are looking for
+                            $temp_sov = array();
+                            $temp_sov_keys = array(); //we dont need duplicates
+                            foreach ($temp_array as $sov) {
+                                if(!array_key_exists($sov["id"],$temp_sov_keys)){
+                                    array_push($temp_sov_keys,$sov["id"]);
+                                    array_push($temp_sov,$sov);
+                                }
+                            }
+                            //the refrence now becomes the new source of truth
+                            $value_source = $temp_sov;
+                            $prev = "array";//now out sov is an array of objects
+                        }elseif($prev == "object"){
+                            //the refrence is an object and contains an array at this location
+                            //which has objects that are to become the sov
+                            $temp_array = $value_source[$xtu_path_part];
+                            //every object in this array is a potential source of the value
+                            //we are looking for
+                            $temp_sov = array();
+                            $temp_sov_keys = array(); //we dont need duplicates
+                            foreach ($temp_array as $sov) {
+                                if(!array_key_exists($sov["id"],$temp_sov_keys)){
+                                    array_push($temp_sov_keys,$sov["id"]);
+                                    array_push($temp_sov,$sov);
+                                }
+                            }
+                            //the refrence now becomes the new source of truth
+                            $value_source = $temp_sov;
+                            $prev = "array";//now out sov is an array of objects
+                        }elseif($prev == "array"){
+                            //the refrence is an array of ojects and each object
+                            //contains an array at this location with a batch of 
+                            //child objects that are to be the sov
+                            $temp_sov = array();
+                            $temp_sov_keys = array(); //we dont need duplicates
+                            foreach ($value_source as $sovHolder) {
+                                $temp_array = $sovHolder[$xtu_path_part];
+                                //every object in this array is a potential source of the value
+                                //we are looking for
+                                foreach ($temp_array as $sov) {
+                                    if(!array_key_exists($sov["id"],$temp_sov_keys)){
+                                        array_push($temp_sov_keys,$sov["id"]);
+                                        array_push($temp_sov,$sov);
+                                    }
+                                }
+                            }
+                            //the refrence now becomes the new source of truth
+                            $value_source = $temp_sov;
+                            $prev = "array";//now out sov is an array of objects
+                        }
+                    }
+                }
+                
+
+                $res[BEE_RI][$xtu_key] = $xtracted;
+                unset($res[BEE_RI][$xtu_path_parts[0]]);//delete previous honey at this node
+            }
         }
     }
     return $res;
@@ -569,6 +761,73 @@ function bee_hive_run_login($post_nectoroid,$bee){
             }
         }
     }
+    return $res;
+}
+
+function bee_hive_run_uploads($bee){
+    $res = array(null,array());
+    $file_honey = array();
+    //you cannot upload files to the server if you have not yet 
+    //logged in
+    if($bee["BEE_USER"]["id"] != 0){
+        $hn = $bee["BEE_APP_NAME"];
+        $path_to_temp_dir = "bee/temp_uploads/uf_" . $hn . "_" . $bee["BEE_USER"]["id"];
+        if (!file_exists($path_to_temp_dir)) {
+            mkdir($path_to_temp_dir, 0777, true);
+        }
+        //check that this user has a folder under uploads
+        //upload_files_with_post_data
+        $target_dir = $path_to_temp_dir;
+        foreach ($_FILES as $file_key => $file_value) {
+            $target_file = $target_dir . basename($file_value["name"]);
+            $uploadOk = 1;
+            $imageFileType = strtolower(pathinfo($target_file,PATHINFO_EXTENSION));
+            $is_an_image = true;
+            $file_exists = false;
+            $file_size = 500000;
+            $file_is_too_large = false;
+            $file_type_is_right = true;
+            $allowed_file_types = array("jpg","png","jpeg","gif");
+            //nyd
+            //check the  _hive.json to validate the uploaded file using the 
+            //parameters below
+            // Check if image file is a actual image or fake image
+            $check = getimagesize($file_value["tmp_name"]);
+            if($check !== false) {
+                $is_an_image = true;
+            } else {
+                $is_an_image = false;
+            }
+            // Check if file already exists
+            if (file_exists($target_file)) {
+                $file_exists = true;
+                $uploadOk = 0;
+            }
+            // Check file size
+            if ($file_value["size"] > $file_size) {
+                $file_is_too_large = true;
+                $uploadOk = 0;
+            }
+            // Allow certain file formats
+            if(in_array($imageFileType,$allowed_file_types)) {
+                $file_type_is_right = false;
+                $uploadOk = 0;
+            }
+            // Check if $uploadOk is set to 0 by an error
+            if ($uploadOk == 0) {
+                array_push($res[BEE_EI],"Sorry, your file was not uploaded.");
+            } else {
+                if (move_uploaded_file($file_value["tmp_name"], $target_file)) {
+                    $file_honey[$file_key] = $target_file;
+                } else {
+                    array_push($res[BEE_EI],"Sorry, there was an error uploading your file.");
+                }
+            }
+        }
+    }else{
+        array_push($res[BEE_EI],"You are not authorised to access this resource");
+    }
+    $res[BEE_RI] = $file_honey;
     return $res;
 }
 

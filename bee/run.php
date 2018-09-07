@@ -148,7 +148,8 @@
         "BEE_HIVE_CONNECTION" => null,
         "BEE_GARDEN" => $BEE_GARDEN,
         "BEE_ERRORS" => $BEE_ERRORS,
-        "BEE_JWT_ENCRYPTION" => $BEE_JWT_ENCRYPTION
+        "BEE_JWT_ENCRYPTION" => $BEE_JWT_ENCRYPTION,
+        "BEE_USER" => array("id"=>0)
     );
 
     function bee_run_register_hive($registration_nector,$bee){
@@ -168,7 +169,7 @@
             );
             $hrl_res = bee_hive_run_login($login_nector, $bee);
             $whole_honey["_f_login"] = $hrl_res[BEE_RI];
-            $res[BEE_RI] = $whole_honey;
+            $res[BEE_RI] = $whole_honey["_f_login"];
             $res[BEE_EI] = array_merge($res[BEE_EI],$hrl_res[BEE_EI]);
             return $res; 
         }
@@ -207,7 +208,7 @@
         $res = array(null,array(),$structure);
         //tools_dump("@0 == ",__FILE__,__LINE__,$nectoroid);
         $sr_res = segmentation_run($nectoroid,$structure,$connection);
-        //tools_dump("@1 segmentation_run res: ",__FILE__,__LINE__,$nectoroid);
+        //tools_dump("@1 segmentation_run res: ",__FILE__,__LINE__,$sr_res);
         $hasr_res = hive_after_segmentation_run($sr_res,$nectoroid,$structure,$connection);
         $res[BEE_RI] = $hasr_res[BEE_RI];
         $res[BEE_EI] = array_merge($res[BEE_EI],$hasr_res[BEE_EI]);
@@ -241,7 +242,8 @@
                 "BEE_HIVE_CONNECTION" => $BEE_HIVE_CONNECTION,
                 "BEE_GARDEN" => $BEE_GARDEN,
                 "BEE_ERRORS" => $BEE_ERRORS,
-                "BEE_JWT_ENCRYPTION" => $BEE_JWT_ENCRYPTION
+                "BEE_JWT_ENCRYPTION" => $BEE_JWT_ENCRYPTION,
+                "BEE_USER" => array("id"=>0)
             );
         }    
     }
@@ -275,10 +277,11 @@
                 $jwt->verify($token, $context);
                 $payload = $token->getPayload();
                 $current_user = $payload->findClaimByName("user")->getValue();
+                $an = $payload->findClaimByName("app_name")->getValue();
                 //tools_dumpx("foo",__FILE__,__LINE__,$current_user);
                 $bee["BEE_USER"] = $current_user;
+                $bee["BEE_APP_NAME"] = $an;
                 //get connection
-                
             } catch (Emarref\Jwt\Exception\VerificationException $e) {
                 $msg = $e->getMessage();
                 array_push($res[BEE_EI],$msg);
@@ -308,17 +311,25 @@
                 //there is nothing to process
             }
         }else if($_SERVER["REQUEST_METHOD"] == "POST"){
-            $temp_postdata = file_get_contents("php://input");
-            //tools_dumpx("temp_postdata",__FILE__,__LINE__,$temp_postdata);
-            $tsji_res = tools_suck_json_into($temp_postdata, array());
-            $res[BEE_EI] = array_merge($tsji_res[BEE_EI],$res[BEE_EI]);
-            if(count($res[BEE_EI])==0){//no errors
-                $postdata = $tsji_res[BEE_RI];
-                //tools_dumpx("postdata",__FILE__,__LINE__,$postdata);
-                $brp_res = bee_run_post($postdata,$bee,$bee["BEE_USER"]["id"]);
-                //tools_dumpx("brp_res post ",__FILE__,__LINE__,$brp_res);
-                $res[BEE_EI] = array_merge($res[BEE_EI],$brp_res[BEE_EI]);
-                $res[BEE_RI] = $brp_res[BEE_RI];
+            //check if there is a file upload
+            if(count($_FILES) > 0){
+                $bhru_res = bee_hive_run_uploads($bee);
+                $res[BEE_EI] = array_merge($res[BEE_EI],$bhru_res[BEE_EI]);
+                $res[BEE_RI] = $bhru_res[BEE_RI];
+            }else{
+                //do a normal file processing
+                $temp_postdata = file_get_contents("php://input");
+                //tools_dumpx("temp_postdata",__FILE__,__LINE__,$temp_postdata);
+                $tsji_res = tools_suck_json_into($temp_postdata, array());
+                $res[BEE_EI] = array_merge($tsji_res[BEE_EI],$res[BEE_EI]);
+                if(count($res[BEE_EI])==0){//no errors
+                    $postdata = $tsji_res[BEE_RI];
+                    //tools_dumpx("postdata",__FILE__,__LINE__,$postdata);
+                    $brp_res = bee_run_post($postdata,$bee,$bee["BEE_USER"]["id"]);
+                    //tools_dumpx("brp_res post ",__FILE__,__LINE__,$brp_res);
+                    $res[BEE_EI] = array_merge($res[BEE_EI],$brp_res[BEE_EI]);
+                    $res[BEE_RI] = $brp_res[BEE_RI];
+                }
             }
         }else if($_SERVER["REQUEST_METHOD"] == "PUT"){
             $method = "put";

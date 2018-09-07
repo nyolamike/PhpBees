@@ -4,6 +4,14 @@
     function sqllization_run($sql_segments){
         $sqls = array();
         foreach ($sql_segments as $root_node_name => $segmentation) {
+            if($segmentation == "_at"){//extractionstaff
+                continue;
+            }
+            // if(!isset($segmentation["temp_sections_sql"])){
+            //     tools_dump("root_node_name",__FILE__,__LINE__,$root_node_name);
+            //     tools_dump("segmentation",__FILE__,__LINE__,$segmentation);
+            // }
+
             $comb_name = Inflect::singularize($root_node_name);
             $sections_sql = rtrim(trim($segmentation["temp_sections_sql"]), ',');
             $where_sql = trim($segmentation["temp_where_sql"]);

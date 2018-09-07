@@ -359,5 +359,6 @@
         "country" : "uganda",
         "phone_number" : "0703158861",
         "password" : "qwerty2015"
-    }
+    },
+    "upload_files_with_post_data": false
 }

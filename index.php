@@ -17,5 +17,165 @@
 
     //tools_dumpx("BEE",__FILE__,__LINE__,$BEE["BEE_HIVE_CONNECTION"]);
     bee_handle_requests($BEE);
+
+
+    /*
+    $temp_postdata = file_get_contents("php://input");
+    var_dump($temp_postdata);
+
+    //tools_dump("temp_postdata",__FILE__,__LINE__,$temp_postdata);
+    var_dump($_FILES);
+
+    var_dump($_POST); */
+
+    /*
+        //find the right price package for our print job
+        print_both_sides =true,
+        pages = 450,
+        copies = 100,
+
+        paper_type = 1.rotatrim -- list
+        paper_size = 2.a4 --list
+        colored = 3.true --list
+        
+        .......
+        print_aspect_kind  *list
+            print_aspect  *paper size  
+                print_aspect_value  *a4
+                    print_package_aspect  *xmas--a4
+        print_package *xmas@400
+                    print_package_aspect  *xmas--a4
+
+        find print_package_aspects where 
+
+        print_packages
+            print_package_aspects
+                print_aspect_value
+
+        {
+            _xtu_print_packages:{
+                print_aspect_values: {
+                    print_package_aspects: {
+                        print_package: {}
+                    },
+                    _w:[
+                        [
+                            [ ["id","=",1], "OR", ["id","=",2] ],
+                            "OR",
+                            ["id","=",3]
+                        ]
+                    ]
+                },
+                _at:"print_aspect_values.print_package_aspects",
+            }
+        }
+
+
+        /////////////////////
+        $prv = "none";
+        $hny = $res[BEE_RI];
+        
+        for ($i=0; $i < count($xtu_path_parts); $i++) {
+            $xtu_path_part = $xtu_path_parts[$i];
+            $singular = Inflect::singularize($xtu_path_part); 
+
+            if($i+1 == count($xtu_path_parts)){ //the last part 
+                //check if xtu key is an object
+                tools_dump("xtu nhy",__FILE__,__LINE__,$hny);
+                
+                if($singular == $xtu_path_part){
+                    //this is an object
+                    if($prv == "array"){
+                        $temp = array();
+                        $temp_keys = array();
+                        foreach ($hny as $list_item) {
+                            $obj = $list_item[$xtu_path_part];
+                            if(!in_array($obj["id"],$temp_keys)){
+                                array_push($temp_keys,$obj["id"]);
+                                array_push($temp,$obj[$xtu_key]);
+                            }
+                        }
+                        $hny = $temp;
+                        $prv = "none";
+                    }elseif($prv == "none" || $prv == "object"){
+                        //this is an object
+                        $temp = $hny[$xtu_path_part][$xtu_key];
+                        $prv = "none";
+                    }
+                }else{
+                    if($prv == "array"){
+                        $temp = array();
+                        $temp_keys = array();
+                        foreach ($hny as $list_item) {
+                            $obj = $list_item[$xtu_path_part];
+                            if(!in_array($obj["id"],$temp_keys)){
+                                array_push($temp_keys,$obj["id"]);
+                                array_push($temp,$obj[$xtu_key]);
+                            }
+                        }
+                        $hny = $temp;
+                        $prv = "none";
+                    }elseif($prv == "none" || $prv == "object"){
+                        //this is an object
+                        $temp = $hny[$xtu_path_part][$xtu_key];
+                        $prv = "none";
+                    }
+                }
+            }
+
+                
+            if($singular == $xtu_path_part){
+                if($prv == "array"){
+                    $temp = array();
+                    $temp_keys = array();
+                    foreach ($hny as $list_item) {
+                        $obj = $list_item[$xtu_path_part];
+                        if(!in_array($obj["id"],$temp_keys)){
+                            array_push($temp_keys,$obj["id"]);
+                            array_push($temp,$obj);
+                        }
+                    }
+                    $hny = $temp;
+                    $prv = "array";
+                }elseif($prv == "none" || $prv == "object"){
+                    //this is an object
+                    $hny = $hny[$xtu_path_part];
+                    $prv = "object";
+                }
+            }else{
+                if($prv == "none" || $prv == "object" ){
+                    //its an array or list of values
+                    $temp = array();
+                    $temp_keys = array();
+                    $list = $hny[$xtu_path_part];
+                    foreach ($list as $list_index => $list_item) {
+                        if(!in_array($list_item["id"],$temp_keys)){
+                            array_push($temp_keys,$list_item["id"]);
+                            array_push($temp,$list_item);
+                        }
+                    }
+                    $hny = $temp;
+                    $prv = "array";
+                }elseif($prv == "array"){
+                    $temp = array();
+                    $temp_keys = array();
+                    foreach ($hny as $hny_index => $hny_item) {
+                        $list = $hny_item[$xtu_path_part];
+                        foreach ($list as $list_index => $list_item) {
+                            if(!in_array($list_item["id"],$temp_keys)){
+                                array_push($temp_keys,$list_item["id"]);
+                                array_push($temp,$list_item);
+                            }
+                        }
+                    }
+                    $hny = $temp;
+                    $prv = "array";
+                }
+            }
+        }
+        
+
+
+    */
     
 ?>
