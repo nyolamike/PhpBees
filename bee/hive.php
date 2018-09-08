@@ -771,7 +771,7 @@ function bee_hive_run_uploads($bee){
     //logged in
     if($bee["BEE_USER"]["id"] != 0){
         $hn = $bee["BEE_APP_NAME"];
-        $path_to_temp_dir = "bee/temp_uploads/uf_" . $hn . "_" . $bee["BEE_USER"]["id"];
+        $path_to_temp_dir = "bee/temp_uploads/uf_" . $hn . "_" . $bee["BEE_USER"]["id"]."/";
         if (!file_exists($path_to_temp_dir)) {
             mkdir($path_to_temp_dir, 0777, true);
         }

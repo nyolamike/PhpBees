@@ -360,7 +360,7 @@
             }
             $comb_name  = Inflect::singularize($root_node_name);
             $sects = $structure[$comb_name];
-            $bspp_res = bee_segmentation_post_process($root_node_name, $comb_name, $root_node, $sects, $connection, $user_id);
+            $bspp_res = bee_segmentation_post_process($root_node_name, $comb_name, $root_node, $structure, $connection, $user_id);
             //tools_dumpx("bspp_res: ",__FILE__,__LINE__,$bspp_res);
             $whole_honey[$root_node_name] = $bspp_res[BEE_RI][$root_node_name];
             $res[BEE_EI] = array_merge($res[BEE_EI],$bspp_res[BEE_EI]);
@@ -369,10 +369,10 @@
         return $res;
     }
 
-    function bee_segmentation_post_process($node_name,$comb_name, $node, $sectures, $connection, $user_id){
+    function bee_segmentation_post_process($node_name,$comb_name, $node, $structure, $connection, $user_id){
         $res = array(null,array());
         if($comb_name == $node_name){
-            $bspps_res = bee_segmentation_post_process_sqllize($node_name, $comb_name, $node, $sectures, $user_id);
+            $bspps_res = bee_segmentation_post_process_sqllize($node_name, $comb_name, $node, $structure, $user_id);
             $res[BEE_RI] = $bspps_res[BEE_RI];
             $res[BEE_EI] = array_merge($res[BEE_EI],$bspps_res[BEE_EI]);
         }else{
@@ -381,7 +381,7 @@
             //many insertions into the same comb
             for ($i=0; $i < count($node); $i++) { 
                 $obj = $node[$i];
-                $bspps_res = bee_segmentation_post_process_sqllize($node_name, $comb_name, $obj, $sectures,$user_id);
+                $bspps_res = bee_segmentation_post_process_sqllize($node_name, $comb_name, $obj, $structure,$user_id);
                 array_push($res[BEE_RI][$node_name],$bspps_res[BEE_RI][$node_name]);
                 $res[BEE_EI] = array_merge($res[BEE_EI],$bspps_res[BEE_EI]);
             }
@@ -389,14 +389,53 @@
         return $res;
     }
 
-    function bee_segmentation_post_process_sqllize($node_name, $comb_name, $node, $sectures,$user_id){
+    function bee_segmentation_post_process_sqllize($node_name, $comb_name, $node, $structure,$user_id){
         $res = array(null,array());
         $guid = uniqid() . "-" . rand(1000,2768);
         $sql = "INSERT INTO " . $comb_name . " ( ";
         $sections_sql = "";
         $values_sql = "";
         foreach ($node as $key => $value) {
-            $sections_sql .= "`".$key."`,";
+            $section_name = $key;
+            //detect special flags
+            if(tools_startsWith($section_name,"_")){
+                if(tools_startsWith($section_name,"_file_")){
+                    //"bee/temp_uploads/uf_" . $hn . "_" . $bee["BEE_USER"]["id"]."/hkjhkhk.jpg";
+                    //$target_file;
+                    // Check if file  exists
+                    if (!file_exists($value)) {
+                        array_push($res[BEE_EI],"The file " . $value. " does not exist");
+                    }else{
+                        $section_name = str_replace("_file_","",$section_name);
+                        $final_destination = "bee/uploads/"; //the default uploads location
+                        //move this file to uploads
+                        //check if we have an upload rules for this comb
+                        if(array_key_exists("upload",$structure)){
+                            $upload_rules = $structure["upload"];
+                            if(array_key_exists($comb_name,$upload_rules)){
+                                $comb_upload_rule = $upload_rules[$comb_name];
+                                if(array_key_exists($section_name,$comb_upload_rule)){
+                                    $section_upload_rule = $comb_upload_rule[$section_name];
+                                    if(array_key_exists("_to",$section_upload_rule)){
+                                        $final_destination = $section_upload_rule["_to"];
+                                    }
+                                }
+                            }
+                        }
+                        $target_file = $final_destination . basename($value);
+                        //move the file
+                        if (rename($value,$target_file)) {
+                            $value = $target_file;
+                        } else {
+                            array_push($res[BEE_EI],"Sorry, there was an error uploading your file.");
+                        }
+                    }
+                }
+                //files
+                continue;
+            }
+
+            $sections_sql .= "`".$section_name."`,";
             //nyd
             //apply formating and interpriting
             //of value according to sectures
