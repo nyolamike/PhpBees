@@ -18,6 +18,12 @@
     //tools_dumpx("BEE",__FILE__,__LINE__,$BEE["BEE_HIVE_CONNECTION"]);
     bee_handle_requests($BEE);
 
+    //FEEBEE
+    //BeeFee
+
+    // $str = "'_fsk_store@1_ksf_','kafko wilson','_fsk_store@2_ksf_'";
+    // $foo  = tools_get_in_between_strings("_fk_", "_kf_", $str);
+    // tools_dumpx("foo",__FILE__,__LINE__,$foo);
 
     /*
     $temp_postdata = file_get_contents("php://input");
@@ -174,7 +180,7 @@
             }
         }
         
-
+     
 
     */
     

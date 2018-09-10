@@ -192,7 +192,8 @@
                 $nector,
                 $bee["BEE_HIVE_STRUCTURE"]["combs"],
                 $bee["BEE_HIVE_CONNECTION"],
-                $bee["BEE_USER"]["id"]
+                $bee["BEE_USER"]["id"],
+                $whole_honey
             );
             //tools_dumpx("here brp_res",__FILE__,__LINE__,$brp_res);
             $whole_honey[$root_node_name] = $brp_res[BEE_RI][$root_node_name];

@@ -40,6 +40,20 @@
         exit(0);
     }
 
+    //https://stackoverflow.com/questions/5696412/how-to-get-a-substring-between-two-strings-in-php
+    /*
+        $str = 'before-str-after';
+        if (preg_match('/before-(.*?)-after/', $str, $match) == 1) {
+            echo $match[1];
+        }
+    */
+    function tools_get_in_between_strings($start, $end, $str){
+        $matches = array();
+        $regex = "/$start(.*?)$end/";//[a-zA-Z0-9_]*
+        preg_match_all($regex, $str, $matches);
+        return $matches[1];
+    }
+
     //adopted from
     //https://stackoverflow.com/questions/834303/startswith-and-endswith-functions-in-php
     function tools_startsWith($haystack, $needle)
@@ -151,6 +165,7 @@
         echo $res;
 		exit(0);
     }
+
 
     
 

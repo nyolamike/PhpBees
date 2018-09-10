@@ -637,17 +637,17 @@ function hive_run_register_hive($post_nectoroid,$bee){
     return $res;
 }
 
-function bee_hive_post($nectoroid,$structure,$connection,$user_id){
+function bee_hive_post($nectoroid,$structure,$connection,$user_id,$prev_res=array()){
     $res = array(null,array(),$structure);
     $bsp_res = bee_segmentation_post($nectoroid,$structure,$connection,$user_id);
     //tools_dumpx("bsp_res: ",__FILE__,__LINE__,$bsp_res);
-    $tree = hive_after_segmentation_post($bsp_res,$structure,$connection);
+    $tree = hive_after_segmentation_post($bsp_res,$structure,$connection,$prev_res);
     $res[BEE_RI] = $tree[BEE_RI];
     $res[BEE_EI] = array_merge($res[BEE_EI],$tree[BEE_EI]);
     return $res; 
 }
 
-function hive_after_segmentation_post($segmentation_run_res,$structure,$connection){
+function hive_after_segmentation_post($segmentation_run_res,$structure,$connection,$prev_res=array()){
     $res = array(null,array(),$structure);
     $sr_res = $segmentation_run_res;
     //tools_dump("hive segmentation results",__FILE__,__LINE__,$sr_res[BEE_RI]);
@@ -655,7 +655,7 @@ function hive_after_segmentation_post($segmentation_run_res,$structure,$connecti
     $res[2] = $sr_res[2];//the structure
     if(count($sr_res[BEE_EI]) == 0){//when we dont have any errors
         //convert these queries into raw honey
-        $pr_res = production_post($sr_res[BEE_RI],$connection);
+        $pr_res = production_post($sr_res[BEE_RI],$connection,$prev_res);
         //tools_dump("@3 production_post res: ",__FILE__,__LINE__,$pr_res);
         $res[BEE_EI] = array_merge($res[BEE_EI],$pr_res[BEE_EI]);
         if(count($sr_res[BEE_EI]) == 0){//when we dont have any errors
