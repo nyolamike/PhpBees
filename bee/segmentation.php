@@ -342,16 +342,61 @@
                 $val_right = "'".$val_right."'";
             }
             $sql = $sql . " " . $val_left . " = " . $val_right;
+        }elseif($condition == ">=" || $condition == "gte" ||   $condition == "GTE" ){
+            //left side =  right side
+            $val_left = (is_array($left))? segmentation_run_where_entry($left,$comb_name) : ("" . $comb_name . "." . $left);
+            $val_right = (is_array($right))? segmentation_run_where_entry($right,$comb_name) : $right;
+            if(!is_numeric($val_right)){
+                $val_right = "'".$val_right."'";
+            }
+            $sql = $sql . " " . $val_left . " >= " . $val_right;
+        }elseif($condition == "<=" || $condition == "lte" ||   $condition == "LTE" ){
+            //left side =  right side
+            $val_left = (is_array($left))? segmentation_run_where_entry($left,$comb_name) : ("" . $comb_name . "." . $left);
+            $val_right = (is_array($right))? segmentation_run_where_entry($right,$comb_name) : $right;
+            if(!is_numeric($val_right)){
+                $val_right = "'".$val_right."'";
+            }
+            $sql = $sql . " " . $val_left . " <= " . $val_right;
+        }elseif($condition == "!=" || $condition == "ne" ||   $condition == "NE" ){
+            //left side =  right side
+            $val_left = (is_array($left))? segmentation_run_where_entry($left,$comb_name) : ("" . $comb_name . "." . $left);
+            $val_right = (is_array($right))? segmentation_run_where_entry($right,$comb_name) : $right;
+            if(!is_numeric($val_right)){
+                $val_right = "'".$val_right."'";
+            }
+            $sql = $sql . " " . $val_left . " != " . $val_right;
+        }elseif($condition == ">" || $condition == "gt" ||   $condition == "GT" ){
+            //left side =  right side
+            $val_left = (is_array($left))? segmentation_run_where_entry($left,$comb_name) : ("" . $comb_name . "." . $left);
+            $val_right = (is_array($right))? segmentation_run_where_entry($right,$comb_name) : $right;
+            if(!is_numeric($val_right)){
+                $val_right = "'".$val_right."'";
+            }
+            $sql = $sql . " " . $val_left . " > " . $val_right;
+        }elseif($condition == "<" || $condition == "lt" ||   $condition == "LT" ){
+            //left side =  right side
+            $val_left = (is_array($left))? segmentation_run_where_entry($left,$comb_name) : ("" . $comb_name . "." . $left);
+            $val_right = (is_array($right))? segmentation_run_where_entry($right,$comb_name) : $right;
+            if(!is_numeric($val_right)){
+                $val_right = "'".$val_right."'";
+            }
+            $sql = $sql . " " . $val_left . " < " . $val_right;
         }elseif($condition == "LIKE" || $condition == "like" || $condition == "lk" || $condition == "~" ){
             //left side =  right side
             $val_left = (is_array($left))? segmentation_run_where_entry($left,$comb_name) : ("" . $comb_name . "." . $left);
             $val_right = (is_array($right))? segmentation_run_where_entry($right,$comb_name) : $right;
             $sql = $sql . " " . $val_left . " LIKE '%" . $val_right . "%' ";
-        }elseif($condition == "OR"){
+        }elseif($condition == "OR" || $condition == "or" || $condition == "|" || $condition == "||"){
             //left side =  right side
             $val_left = (is_array($left))? segmentation_run_where_entry($left,$comb_name) : ("" . $comb_name . "." . $left);
             $val_right = (is_array($right))? segmentation_run_where_entry($right,$comb_name) :  $right;
             $sql = $sql . " (" . $val_left . ") OR (" . $val_right . ")";
+        }elseif($condition == "AND" || $condition == "and" || $condition == "&" || $condition == "&&"){
+            //left side =  right side
+            $val_left = (is_array($left))? segmentation_run_where_entry($left,$comb_name) : ("" . $comb_name . "." . $left);
+            $val_right = (is_array($right))? segmentation_run_where_entry($right,$comb_name) :  $right;
+            $sql = $sql . " (" . $val_left . ") AND (" . $val_right . ")";
         }
         return $sql;
     }
