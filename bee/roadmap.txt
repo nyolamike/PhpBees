@@ -3,3 +3,6 @@ having more than one fk in a table and being able to do the parents and children
 working with a table that has a fk that refrences its self
 in the less strict mode which is the default one, the _hive,json file changes as tables are created depending on how the request is structured
 migrations
+
+if($is_restricted==true && BEE_ENFORCE_RELATIONSHIPS == false){
+for inserting and updating records

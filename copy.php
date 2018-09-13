@@ -572,71 +572,29 @@
             $bsdw_res = bee_segmentation_delete_where($comb_name,$root_node_name,$root_node,$structure,$connection);
             $res[BEE_EI] = array_merge($res[BEE_EI], $bsdw_res[BEE_EI]);
             $condition = $bsdw_res[BEE_RI];
-            //tools_dump("bsdw_res",__FILE__,__LINE__,$condition);
-            $pids = $bsdw_res[3];
-            $sql = $sql . ((strlen($condition)>0)? " WHERE " . $condition :  " ");
+
+            $sql = $sql . ((strlen($condition)>=0)? " WHERE " . $condition :  " ");
             $whole_honey[$root_node_name] = array(
                 "sql" => $sql,
-                "children_sqls" => array()
+                "children" => array()
             );
 
-            
+            //nyd
             //get the deletes sqls for related child records
             //if restricted is true
-            //and enforce_relationships = false
-            //restricted just means that it cannot create missing columns or tables
-            //restricted it doesnot affect relationships
-            //also it affects data integrity, deleting, inserting and updating records
-            if($is_restricted==true && BEE_ENFORCE_RELATIONSHIPS == false){
-                $bsdcs_res = bee_segmentation_delete_child_sqls(array(),$pids,$comb_name,$structure,$connection);  
-                $whole_honey[$root_node_name]["children_sqls"] = $bsdcs_res[BEE_RI];
-                $res[BEE_EI] = array_merge($res[BEE_EI], $bsdcs_res[BEE_EI]);
-                $res[2] = $bsdcs_res[2];
-                //tools_dumpx("bsdcs_res: ",__FILE__,__LINE__,$bsdcs_res);  
+            if($is_restricted==true){
+                foreach ($structure as $section_name => $section_def) {
+                    $parent_key = $singular_parent_name . "_id";
+                    $parent_key2 = "other_" .$singular_parent_name . "_id";
+                    if(array_key_exists($parent_key,$section_def)){
+                        tools_dump("deleting also from",__FILE__,__LINE__,$section_name);
+                    }elseif(array_key_exists($parent_key2,$section_def)){
+                        tools_dump("deleting also from",__FILE__,__LINE__,$section_name);
+                    }
+                }
             }
         }
         $res[BEE_RI] = $whole_honey;
-        //nyd test results like on other deeply related tables
-        //and multiple parent tables
-        tools_dumpx("whole_honey: ",__FILE__,__LINE__,$whole_honey);
-        return $res;
-    }
-
-    function bee_segmentation_delete_child_sqls($csqls,$pids,$comb_name,$structure,$connection){
-        $res = array(null,array(),$structure);
-        foreach ($structure as $section_name => $section_def) {
-            $parent_key = $comb_name . "_id";
-            $parent_key2 = "other_" .$comb_name . "_id";
-            if(array_key_exists($parent_key,$section_def) || array_key_exists($parent_key2,$section_def)){
-                $parent_k = "";
-                if(array_key_exists($parent_key,$section_def)){
-                    $parent_k = $parent_key;
-                }elseif(array_key_exists($parent_key2,$section_def)){
-                    $parent_k = $parent_key2;
-                }
-                $csql = "DELETE FROM " . $section_name ;
-                $csql_w = "";
-                foreach ($pids as $pid) {
-                    $csql_w .= " " . $parent_k . " = " . $pid . " OR";
-                }
-                $csql_w = trim($csql_w,"OR");
-                $csql = $csql . ((strlen($csql_w)>0)? " WHERE " . $csql_w :"");
-                array_push($csqls,$csql);
-                
-                $sqlxy = "SELECT id FROM " . $section_name . " WHERE " . $csql_w;
-                $hr_res = hive_run($sqlxy,$connection);
-                $to_be_ids = array();
-                foreach ($hr_res[BEE_RI]["data"] as $ind => $obj) {
-                    array_push($to_be_ids,$obj["id"]);
-                }
-                $bsdcs_res = bee_segmentation_delete_child_sqls($csqls,$to_be_ids,$section_name,$structure,$connection);
-                $csqls = $bsdcs_res[BEE_RI];
-                $res[2] = $structure;
-                $res[BEE_EI] = array_merge($res[BEE_EI], $bsdcs_res[BEE_EI]);
-                //tools_dumpx("bsdcs_res",__FILE__,__LINE__,$bsdcs_res);
-            }
-        }
-        $res[BEE_RI] = $csqls;
         return $res;
     }
 
@@ -735,6 +693,4 @@
         //tools_dumpx("res[3]",__FILE__,__LINE__,$res[3]);
         return $res;
     }
-
-    
 ?>

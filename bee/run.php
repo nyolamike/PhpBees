@@ -141,6 +141,7 @@
         //tools_reply($hrgg_res[BEE_RI],$BEE_ERRORS,array($BEE_GARDEN_CONNECTION));
         $BEE_GARDEN = $hrgg_res[BEE_RI];
     }
+    define(BEE_ENFORCE_RELATIONSHIPS,false); //nyd get value from hive structure
     $BEE = array(
         "BEE_HIVE_STRUCTURE" => $BEE_HIVE_STRUCTURE,
         "BEE_GARDEN_STRUCTURE" => $GARDEN_STRUCTURE,
@@ -204,6 +205,45 @@
         $res[2] = $bee;
         return $res; 
     }
+
+
+    function bee_run_delete($nectoroid,$bee,$user_id){
+        $res = array(null,array(),null);
+
+        //go through the entire nectorid processing
+        //node by node on the root
+        $whole_honey = array();
+        foreach ($nectoroid as $root_node_name => $root_node) {
+            
+            if(tools_startsWith($root_node_name,"_")){
+                continue;
+            }
+            //tools_dumpx("here in post foreach loop",__FILE__,__LINE__,$root_node);
+            //nyd
+            //check if user is authorised to delete data here
+            $nector = array();
+            $nector[$root_node_name] = $root_node;
+            $is_restricted = false;
+            if(isset($bee["BEE_HIVE_STRUCTURE"]["is_restricted"])){
+                $is_restricted = $bee["BEE_HIVE_STRUCTURE"]["is_restricted"];
+            }
+            $brp_res = bee_hive_delete(
+                $nector,
+                $bee["BEE_HIVE_STRUCTURE"]["combs"],
+                $bee["BEE_HIVE_CONNECTION"],
+                $bee["BEE_USER"]["id"],
+                $is_restricted
+            );
+            //tools_dumpx("here brp_res",__FILE__,__LINE__,$brp_res);
+            $whole_honey[$root_node_name] = $brp_res[BEE_RI][$root_node_name];
+            $res[BEE_EI] = array_merge($res[BEE_EI],$brp_res[BEE_EI]);
+        }
+
+        $res[BEE_RI] = $whole_honey;
+        $res[2] = $bee;
+        return $res; 
+    }
+
     
     function bee_run_get($nectoroid,$structure,$connection){
         $res = array(null,array(),$structure);
@@ -248,6 +288,10 @@
             );
         }    
     }
+
+
+    //nyd
+    //get the children_tree from the hive structure
 
     function bee_handle_requests($bee){
         $res = array(null,array(),null);
@@ -335,7 +379,19 @@
         }else if($_SERVER["REQUEST_METHOD"] == "PUT"){
             $method = "put";
         }else if($_SERVER["REQUEST_METHOD"] == "DELETE"){
-            $method = "delete";
+            //do a normal file processing
+            $temp_postdata = file_get_contents("php://input");
+            //tools_dumpx("temp_postdata: ",__FILE__,__LINE__,$temp_postdata);
+            $tsji_res = tools_suck_json_into($temp_postdata, array());
+            $res[BEE_EI] = array_merge($tsji_res[BEE_EI],$res[BEE_EI]);
+            if(count($res[BEE_EI])==0){//no errors
+                $postdata = $tsji_res[BEE_RI];
+                //tools_dumpx("postdata",__FILE__,__LINE__,$postdata);
+                $brd_res = bee_run_delete($postdata,$bee,$bee["BEE_USER"]["id"]);
+                //tools_dumpx("brd_res delete ",__FILE__,__LINE__,$brd_res);
+                $res[BEE_EI] = array_merge($res[BEE_EI],$brd_res[BEE_EI]);
+                $res[BEE_RI] = $brd_res[BEE_RI];
+            }
         }
 
         tools_reply($res[BEE_RI],$res[BEE_EI],array(

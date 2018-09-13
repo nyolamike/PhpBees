@@ -182,6 +182,26 @@
         
      
 
+    //delete design
+    {
+        "stockin":4,
+	    "_comment":"Deletes stockin of id 4"
+    }
+
+    {
+        "stockins":[5,6,7],
+        "_comment2":"Deletes stockin of id 5 6 7"
+    }
+    
+    {
+        "stockins":{
+            "_w":[
+                [["store_id","=",45], "AND" , ["section_id","=",45]]
+            ]	
+        },
+        "_comment2":"Deletes has a _w flag"
+    }
+
     */
     
 ?>

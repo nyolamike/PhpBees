@@ -45,9 +45,12 @@ function hive_run($sql,$connection){
             $hive_response[BEE_RI]["data"] = $data;
         }else if(tools_startsWith($sql,"UPDATE") == TRUE){
             $res = $connection->exec($sql);
-            //nyd
-            //get the number of affected records
-            $hive_response[BEE_RI]["num"] = 1;
+            $hive_response[BEE_RI]["num"] = $connection->rowCount();
+            $hive_response[BEE_RI]["hive_res"] = $res;
+        }else if(tools_startsWith($sql,"DELETE") == TRUE){
+            $pdo_statment = $connection->prepare($sql);
+            $res = $pdo_statment->execute();
+            $hive_response[BEE_RI]["num"] = $pdo_statment->rowCount();
             $hive_response[BEE_RI]["hive_res"] = $res;
         }else{
             $res = $connection->exec($sql);
@@ -330,7 +333,7 @@ function hive_after_segmentation_run($segmentation_run_res,$nectoroid,$structure
         $pr_res = production_run($sr_res[BEE_RI],$connection);
         //tools_dump("@3 production_run res: ",__FILE__,__LINE__,$pr_res);
         $res[BEE_EI] = array_merge($res[BEE_EI],$pr_res[BEE_EI]);
-        if(count($sr_res[BEE_EI]) == 0){//when we dont have any errors
+        if(count($pr_res[BEE_EI]) == 0){//when we dont have any errors
             $pr_res = packaging_run($pr_res[BEE_RI],$nectoroid,$structure,$connection);
             $res[BEE_EI] = array_merge($res[BEE_EI],$pr_res[BEE_EI]);
             $res[BEE_RI] = $pr_res[BEE_RI];
@@ -523,6 +526,9 @@ function hive_after_segmentation_run($segmentation_run_res,$nectoroid,$structure
     return $res;
 }
 
+//1033855037
+//p845kf
+
 //this will create the apllications db
 function hive_run_register_hive($post_nectoroid,$bee){
     $res = array(null, array());
@@ -658,7 +664,7 @@ function hive_after_segmentation_post($segmentation_run_res,$structure,$connecti
         $pr_res = production_post($sr_res[BEE_RI],$connection,$prev_res);
         //tools_dump("@3 production_post res: ",__FILE__,__LINE__,$pr_res);
         $res[BEE_EI] = array_merge($res[BEE_EI],$pr_res[BEE_EI]);
-        if(count($sr_res[BEE_EI]) == 0){//when we dont have any errors
+        if(count($pr_res[BEE_EI]) == 0){//when we dont have any errors
             $pr_res = packaging_post($pr_res[BEE_RI],$structure,$connection);
             $res[BEE_EI] = array_merge($res[BEE_EI],$pr_res[BEE_EI]);
             $res[BEE_RI] = $pr_res[BEE_RI];
@@ -828,6 +834,37 @@ function bee_hive_run_uploads($bee){
         array_push($res[BEE_EI],"You are not authorised to access this resource");
     }
     $res[BEE_RI] = $file_honey;
+    return $res;
+}
+
+function bee_hive_delete($nectoroid,$structure,$connection,$user_id,$is_restricted=false){
+    $res = array(null,array(),$structure);
+    $bsp_res = bee_segmentation_delete($nectoroid,$structure,$connection,$user_id,$is_restricted);
+    //tools_dumpx("bsp_res: ",__FILE__,__LINE__,$bsp_res[BEE_RI]);
+    $tree = hive_after_segmentation_delete($bsp_res,$structure,$connection,$is_restricted);
+    $res[BEE_RI] = $tree[BEE_RI];
+    $res[BEE_EI] = array_merge($res[BEE_EI],$tree[BEE_EI]);
+    return $res; 
+}
+
+function hive_after_segmentation_delete($segmentation_run_res,$structure,$connection,$is_restricted=false){
+    //tools_dumpx("@3 structure res: ",__FILE__,__LINE__,$structure);
+    $res = array(null,array(),$structure);
+    $sr_res = $segmentation_run_res;
+    //tools_dump("hive segmentation results",__FILE__,__LINE__,$sr_res[BEE_RI]);
+    $res[BEE_EI] = array_merge($res[BEE_EI],$sr_res[BEE_EI]);
+    $res[2] = $sr_res[2];//the structure
+    if(count($sr_res[BEE_EI]) == 0){//when we dont have any errors
+        //convert these queries into raw honey
+        $pr_res = production_delete($sr_res[BEE_RI],$connection,$is_restricted);
+        //tools_dump("@3 production_post res: ",__FILE__,__LINE__,$pr_res);
+        $res[BEE_EI] = array_merge($res[BEE_EI],$pr_res[BEE_EI]);
+        if(count($pr_res[BEE_EI]) == 0){//when we dont have any errors
+            $pr_res = packaging_delete($pr_res[BEE_RI],$structure,$connection);
+            $res[BEE_EI] = array_merge($res[BEE_EI],$pr_res[BEE_EI]);
+            $res[BEE_RI] = $pr_res[BEE_RI];
+        }
+    }
     return $res;
 }
 

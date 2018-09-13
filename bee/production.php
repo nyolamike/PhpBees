@@ -92,4 +92,17 @@
         return $res;
     }
 
+    //to convert sqls into raw honey
+    function production_delete($sqls,$connection,$is_restricted=false){
+        $res = array(array(),array());
+        foreach ($sqls as $sql_index => $sql) {
+            //tools_dump("sql_index",__FILE__,__LINE__,array($sql_index,$sql));
+            $hr_res = hive_run($sql,$connection);
+            //tools_dumpx("hr_res",__FILE__,__LINE__,$hr_res);
+            $res[BEE_EI] = array_merge($res[BEE_EI],$hr_res[BEE_EI]);
+            $res[BEE_RI][$sql_index] = $hr_res[BEE_RI];
+        }
+        return $res;
+    }
+
 ?>

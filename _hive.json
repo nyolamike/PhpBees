@@ -367,5 +367,6 @@
                 "_to" : "uploads/products/"
             }
         }
-    }
+    },
+    "is_restricted":true
 }
