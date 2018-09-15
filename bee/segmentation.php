@@ -401,6 +401,116 @@
         return $sql;
     }
 
+    function bee_segmentation_update($nectoroid,$structure,$connection, $user_id){
+        $res = array(null,array(),$structure);
+        //go through the entire nectorid processing
+        //node by node on the root
+        $whole_honey = array();
+        foreach ($nectoroid as $root_node_name => $root_node) {
+            if(tools_startsWith($root_node_name,"_")){
+                continue;
+            }
+            $comb_name  = Inflect::singularize($root_node_name);
+            $sects = $structure[$comb_name];
+            $bspp_res = bee_segmentation_update_process($root_node_name, $comb_name, $root_node, $structure, $connection, $user_id, $whole_honey);
+            //tools_dumpx("bspp_res: ",__FILE__,__LINE__,$bspp_res);
+            $whole_honey[$root_node_name] = $bspp_res[BEE_RI][$root_node_name];
+            $res[BEE_EI] = array_merge($res[BEE_EI],$bspp_res[BEE_EI]);
+        }
+        $res[BEE_RI] = $whole_honey;
+        return $res;
+    }
+
+    function bee_segmentation_update_process($node_name,$comb_name, $node, $structure, $connection, $user_id, $whole_honey){
+        $res = array(null,array());
+        if($comb_name == $node_name){
+            $bspps_res = bee_segmentation_update_process_sqllize($node_name, $comb_name, $node, $structure, $user_id, $whole_honey);
+            $res[BEE_RI] = $bspps_res[BEE_RI];
+            $res[BEE_EI] = array_merge($res[BEE_EI],$bspps_res[BEE_EI]);
+        }else{
+            // $res[BEE_RI] = array();
+            // $res[BEE_RI][$node_name] = array();
+            // //many insertions into the same comb
+            // for ($i=0; $i < count($node); $i++) { 
+            //     $obj = $node[$i];
+            //     $bspps_res = bee_segmentation_update_process_sqllize($node_name, $comb_name, $obj, $structure,$user_id, $whole_honey);
+            //     array_push($res[BEE_RI][$node_name],$bspps_res[BEE_RI][$node_name]);
+            //     $res[BEE_EI] = array_merge($res[BEE_EI],$bspps_res[BEE_EI]);
+            // }
+            $bspps_res = bee_segmentation_update_process_sqllize($node_name, $comb_name, $node, $structure, $user_id, $whole_honey);
+            $res[BEE_RI] = $bspps_res[BEE_RI];
+            $res[BEE_EI] = array_merge($res[BEE_EI],$bspps_res[BEE_EI]);
+        }
+        return $res;
+    }
+
+    function bee_segmentation_update_process_sqllize($node_name, $comb_name, $node, $structure,$user_id, $whole_honey){
+        $res = array(null,array());
+        $sql = "UPDATE " . $comb_name . " SET ";
+        $sections_sql = "";
+        $where_sql = "";
+        foreach ($node as $key => $value) {
+            $values_sql = "";
+            $section_name = $key;
+            //detect special flags
+            if(tools_startsWith($section_name,"_")){
+                $handled = false; //allows control to fall trough
+                //files
+                if(tools_startsWith($section_name,"_file_")){
+                    $bsefv_res = bee_segmentation_evaluate_file_value($section_name,$value,$comb_name,$structure);
+                    $section_name = $bsefv_res[BEE_RI]; 
+                    $res[BEE_EI] = array_merge($res[BEE_EI],$bsefv_res[BEE_EI]); 
+                    $handled = true;
+                }
+                //now
+                if(tools_startsWith($section_name,"_now_")){
+                    $section_name = str_replace("_now_","",$section_name);
+                    $value = time();
+                    $handled = true;
+                }
+                //_fk_
+                if(tools_startsWith($section_name,"_fk_")){
+               
+                    $section_name = str_replace("_fk_","",$section_name);
+                    $value = "_fk_" . $value . "_kf_";
+                    $handled = true;
+                }
+                //_w
+                if(tools_startsWith($section_name,"_w")){
+                    //process the where of updating
+                    $srw_res = segmentation_run_w($value,$comb_name,$node,$structure);
+                    $where_sql = $srw_res[BEE_RI];
+                    $res[BEE_EI] = array_merge($res[BEE_EI], $srw_res[BEE_EI]);
+                    $hive_structure = $srw_res[2];
+                    if(count($srw_res[BEE_EI])>0){ //dont continue if we have errors with _w processing
+                        return $res;
+                    }
+                    $handled = true;
+                    continue;
+                }
+                if($handled == false){
+                    continue;
+                }
+            }
+
+            if(is_string($value) ){
+                $prepared = addslashes(strval($value));
+                $values_sql .= " '" . $prepared . "'";
+            }else if(is_int($value) || is_float($value)){
+                $values_sql .= " " . strval($value);
+            }
+            $sections_sql .= " `".$section_name."` = " . $values_sql . ", ";
+        }
+        $sections_sql   .= " `time_last_modified` = ".time().",";
+        $sections_sql   .= " `last_modified_by` = ".$user_id." ";
+        $sql = $sql .  $sections_sql . ((strlen($where_sql)>0)?" WHERE " . $where_sql: "");
+        $res[BEE_RI] = array();
+        $res[BEE_RI][$node_name] = $sql;
+        return $res;
+    }
+
+
+    
     
     function bee_segmentation_post($nectoroid,$structure,$connection, $user_id){
         $res = array(null,array(),$structure);
@@ -554,7 +664,7 @@
         $res[BEE_RI] = $value;
         return $res;
     }
-    
+
 
     function bee_segmentation_delete($nectoroid,$structure,$connection, $user_id,$is_restricted=false){
         $res = array(null,array(),$structure);
@@ -569,10 +679,17 @@
             $comb_name  = Inflect::singularize($root_node_name);
             $sects = $structure[$comb_name];
             $sql = "DELETE FROM " . $comb_name . " ";
+            if(BEE_SUDO_DELETE){
+                $sql = "UPDATE " . $comb_name . " SET ";
+                $sql .= " is_deleted = 1, ";
+                $sql .= " last_modified_by = " . $user_id . ", ";
+                $sql .= " last_modified_by = " . $user_id . ", ";
+                $sql .= " time_last_modified = " . time() . " ";
+            }
             $bsdw_res = bee_segmentation_delete_where($comb_name,$root_node_name,$root_node,$structure,$connection);
             $res[BEE_EI] = array_merge($res[BEE_EI], $bsdw_res[BEE_EI]);
             $condition = $bsdw_res[BEE_RI];
-            //tools_dump("bsdw_res",__FILE__,__LINE__,$condition);
+            //tools_dumpx("bsdw_res",__FILE__,__LINE__,$condition);
             $pids = $bsdw_res[3];
             $sql = $sql . ((strlen($condition)>0)? " WHERE " . $condition :  " ");
             $whole_honey[$root_node_name] = array(
@@ -587,8 +704,8 @@
             //restricted just means that it cannot create missing columns or tables
             //restricted it doesnot affect relationships
             //also it affects data integrity, deleting, inserting and updating records
-            if($is_restricted==true && BEE_ENFORCE_RELATIONSHIPS == false){
-                $bsdcs_res = bee_segmentation_delete_child_sqls(array(),$pids,$comb_name,$structure,$connection);  
+            if($is_restricted==true && BEE_ENFORCE_RELATIONSHIPS == false && count($pids) > 0){
+                $bsdcs_res = bee_segmentation_delete_child_sqls(array(),$pids,$comb_name,$structure,$connection,$user_id);  
                 $whole_honey[$root_node_name]["children_sqls"] = $bsdcs_res[BEE_RI];
                 $res[BEE_EI] = array_merge($res[BEE_EI], $bsdcs_res[BEE_EI]);
                 $res[2] = $bsdcs_res[2];
@@ -598,11 +715,11 @@
         $res[BEE_RI] = $whole_honey;
         //nyd test results like on other deeply related tables
         //and multiple parent tables
-        tools_dumpx("whole_honey: ",__FILE__,__LINE__,$whole_honey);
+        //tools_dumpx("whole_honey: ",__FILE__,__LINE__,$whole_honey);
         return $res;
     }
 
-    function bee_segmentation_delete_child_sqls($csqls,$pids,$comb_name,$structure,$connection){
+    function bee_segmentation_delete_child_sqls($csqls,$pids,$comb_name,$structure,$connection,$user_id){
         $res = array(null,array(),$structure);
         foreach ($structure as $section_name => $section_def) {
             $parent_key = $comb_name . "_id";
@@ -615,6 +732,13 @@
                     $parent_k = $parent_key2;
                 }
                 $csql = "DELETE FROM " . $section_name ;
+                if(BEE_SUDO_DELETE){
+                    $csql = "UPDATE " . $section_name . " SET ";
+                    $csql .= " is_deleted = 1, ";
+                    $csql .= " last_modified_by = " . $user_id . ", ";
+                    $csql .= " last_modified_by = " . $user_id . ", ";
+                    $csql .= " time_last_modified = " . time() . " ";
+                }
                 $csql_w = "";
                 foreach ($pids as $pid) {
                     $csql_w .= " " . $parent_k . " = " . $pid . " OR";
@@ -624,16 +748,19 @@
                 array_push($csqls,$csql);
                 
                 $sqlxy = "SELECT id FROM " . $section_name . " WHERE " . $csql_w;
+                
                 $hr_res = hive_run($sqlxy,$connection);
                 $to_be_ids = array();
                 foreach ($hr_res[BEE_RI]["data"] as $ind => $obj) {
                     array_push($to_be_ids,$obj["id"]);
                 }
-                $bsdcs_res = bee_segmentation_delete_child_sqls($csqls,$to_be_ids,$section_name,$structure,$connection);
-                $csqls = $bsdcs_res[BEE_RI];
-                $res[2] = $structure;
-                $res[BEE_EI] = array_merge($res[BEE_EI], $bsdcs_res[BEE_EI]);
-                //tools_dumpx("bsdcs_res",__FILE__,__LINE__,$bsdcs_res);
+                if(count($to_be_ids)>0){
+                    $bsdcs_res = bee_segmentation_delete_child_sqls($csqls,$to_be_ids,$section_name,$structure,$connection,$user_id);
+                    $csqls = $bsdcs_res[BEE_RI];
+                    $res[2] = $structure;
+                    $res[BEE_EI] = array_merge($res[BEE_EI], $bsdcs_res[BEE_EI]);
+                    //tools_dumpx("bsdcs_res",__FILE__,__LINE__,$bsdcs_res);
+                }
             }
         }
         $res[BEE_RI] = $csqls;

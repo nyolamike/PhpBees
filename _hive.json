@@ -368,5 +368,6 @@
             }
         }
     },
-    "is_restricted":true
+    "is_restricted":true,
+    "sudo_delete":true
 }

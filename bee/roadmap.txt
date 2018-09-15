@@ -6,3 +6,34 @@ migrations
 
 if($is_restricted==true && BEE_ENFORCE_RELATIONSHIPS == false){
 for inserting and updating records
+
+--updating
+invisible fields/ hidden fields
+attributes list
+seeding
+validations
+multitenancy
+roles based security (menu items,action items)
+logging/audit trails
+group
+order by/ sorting
+pagination
+realtime sockets 
+email
+sms
+batch processing e.g upload excell file
+export database
+image resizing
+working with existing systems
+array syntax : boys:[{}] on the ui client
+clone jobs
+triggers
+server rendering
+paypal integration
+true africa mobile money integration
+conditions
+offline access and synchronisation
+--.xtruction
+--sudo delete
+queues
+limits

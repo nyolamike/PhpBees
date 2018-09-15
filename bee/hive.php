@@ -36,6 +36,17 @@ function hive_run($sql,$connection){
             $hive_response[BEE_RI]["id"] = $liid;
             $hive_response[BEE_RI]["hive_res"] = $res;
         }else if(tools_startsWith($sql,"SELECT") == TRUE){
+            $ky = " WHERE ";
+            $where_pos = strpos($sql,$ky);
+            if(BEE_SUDO_DELETE && $where_pos > 0){
+                $prt1 = substr($sql,0,$where_pos);
+                $where_pos2 = $where_pos + strlen($ky);
+                $prt2 = substr($sql,$where_pos2);
+                $ky = " WHERE ( is_deleted = 0 ) AND ( ";
+                $sql2 = $prt1 . $ky . $prt2 . " ) ";
+                //tools_dumpx("SELECTs",__FILE__,__LINE__,array($prt1,$prt2,$sql,$sql2));
+                $sql = $sql2;
+            }
             $res = $connection->query($sql);
             $data = array();
             foreach ($res as $row) {
@@ -44,10 +55,14 @@ function hive_run($sql,$connection){
             $hive_response[BEE_RI]["hive_res"] = $res;
             $hive_response[BEE_RI]["data"] = $data;
         }else if(tools_startsWith($sql,"UPDATE") == TRUE){
-            $res = $connection->exec($sql);
-            $hive_response[BEE_RI]["num"] = $connection->rowCount();
+            //tools_dumpx("UPDATE",__FILE__,__LINE__,$sql);
+            //$res = $connection->exec($sql);
+            $pdo_statment = $connection->prepare($sql);
+            $res = $pdo_statment->execute();
+            $hive_response[BEE_RI]["num"] = $pdo_statment->rowCount();
             $hive_response[BEE_RI]["hive_res"] = $res;
         }else if(tools_startsWith($sql,"DELETE") == TRUE){
+            //tools_dumpx("DELETE",__FILE__,__LINE__,$sql);
             $pdo_statment = $connection->prepare($sql);
             $res = $pdo_statment->execute();
             $hive_response[BEE_RI]["num"] = $pdo_statment->rowCount();
@@ -643,6 +658,36 @@ function hive_run_register_hive($post_nectoroid,$bee){
     return $res;
 }
 
+function bee_hive_update($nectoroid,$structure,$connection,$user_id,$prev_res=array()){
+    $res = array(null,array(),$structure);
+    $bsp_res = bee_segmentation_update($nectoroid,$structure,$connection,$user_id);
+    //tools_dumpx("bsp_res: ",__FILE__,__LINE__,$bsp_res);
+    $tree = hive_after_segmentation_update($bsp_res,$structure,$connection,$prev_res);
+    $res[BEE_RI] = $tree[BEE_RI];
+    $res[BEE_EI] = array_merge($res[BEE_EI],$tree[BEE_EI]);
+    return $res; 
+}
+
+function hive_after_segmentation_update($segmentation_run_res,$structure,$connection,$prev_res=array()){
+    $res = array(null,array(),$structure);
+    $sr_res = $segmentation_run_res;
+    //tools_dump("hive segmentation results",__FILE__,__LINE__,$sr_res[BEE_RI]);
+    $res[BEE_EI] = array_merge($res[BEE_EI],$sr_res[BEE_EI]);
+    $res[2] = $sr_res[2];//the structure
+    if(count($sr_res[BEE_EI]) == 0){//when we dont have any errors
+        //convert these queries into raw honey
+        $pu_res = production_update($sr_res[BEE_RI],$connection,$prev_res);
+        //tools_dumpx("@3 production_update res: ",__FILE__,__LINE__,$pu_res);
+        $res[BEE_EI] = array_merge($res[BEE_EI],$pu_res[BEE_EI]);
+        if(count($pu_res[BEE_EI]) == 0){//when we dont have any errors
+            $pu_res = packaging_update($pu_res[BEE_RI],$structure,$connection);
+            $res[BEE_EI] = array_merge($res[BEE_EI],$pu_res[BEE_EI]);
+            $res[BEE_RI] = $pu_res[BEE_RI];
+        }
+    }
+    return $res;
+}
+
 function bee_hive_post($nectoroid,$structure,$connection,$user_id,$prev_res=array()){
     $res = array(null,array(),$structure);
     $bsp_res = bee_segmentation_post($nectoroid,$structure,$connection,$user_id);
@@ -867,5 +912,7 @@ function hive_after_segmentation_delete($segmentation_run_res,$structure,$connec
     }
     return $res;
 }
+
+
 
 ?>

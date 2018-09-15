@@ -390,4 +390,18 @@
         $res[BEE_RI] = $honey;
         return $res;
     }
+
+    function packaging_update($raw_honeys,$structure,$connection){
+        //tools_dumpx("testing honey",__FILE__,__LINE__,$raw_honeys);
+        $res = array(array(),array(),$structure);
+        $honey = array();
+        foreach ($raw_honeys as $raw_honey_index => $raw_honey_group){
+            $honey[$raw_honey_index] = array(
+                "_num" => $raw_honey_group["num"]
+            ); 
+        }
+        //tools_dumpx("kafulaka honey",__FILE__,__LINE__,$honey);
+        $res[BEE_RI] = $honey;
+        return $res;
+    }
 ?>
