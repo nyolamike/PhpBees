@@ -90,6 +90,10 @@
                 continue;
             }
 
+            if(tools_startsWith($node_key,"_fx_")){
+                continue;
+            }
+
             //echo $node_name . " <br/>";
             if($node_key == BEE_ANN){
                 //string * means get everything
@@ -97,7 +101,8 @@
                 $sra_res = segmentation_run_a($node_key_value,array(
                     "node_name" => $node_name,
                     "hive_structure" => $hive_structure,
-                    "path" => $path
+                    "path" => $path,
+                    "parent_node" => $node
                 ),$connection);
                 $res[BEE_RI]["temp_sections_sql"] = $sra_res[BEE_RI];
                 $res[BEE_EI] = array_merge($res[BEE_EI], $sra_res[BEE_EI]);
@@ -214,6 +219,7 @@
         $hive_structure = $config["hive_structure"];
         $path = $config["path"];
         $conn = $connection;
+        $parent_node = $config["parent_node"];
 
         $errors = array();
         //make singular the comb name
@@ -293,25 +299,49 @@
         //the section must be part of the structure
         //if not create it and alter table when BEE_STRICT_HIVE == false
         $sql = " ";
+        $hive_inner_attributes = array(
+            "id","guid","inserted_by","is_deleted","last_modified_by","time_inserted","time_last_modified"
+        );
         foreach ($sections as $section_name) {
+            $do_this_instead = "";
             if(tools_startsWith($section_name,"_")){
-                continue; //just in case anything wired went through
+                $fall_through = "";
+                //fx
+                if(tools_startsWith($section_name,"_fx_")){
+                    $fx_node = $parent_node[$section_name];
+                    $bsfr_res = bee_sqllization_fx_run($fx_node,$comb_name,$hive_structure);
+                    //tools_dumpx("bsfr_res",__FILE__,__LINE__,$bsfr_res);
+                    $errors = array_merge($errors,$bsfr_res[BEE_RI]);
+                    $sectfx = substr($section_name,strlen("_fx_"));
+                    $temp_path_to = $path . BEE_SEP . $sectfx;
+                    $subsql = $bsfr_res[BEE_RI] . " as " . $temp_path_to;
+                    $do_this_instead = $subsql;
+                    $fall_through = true;
+                }
+                
+                if($fall_through == false){
+                    continue; //just in case anything wired went through
+                }
             }
-            if(!array_key_exists($section_name,$sectures) && $section_name != "id" && BEE_STRICT_HIVE == false && !$SWO ){
+            if(strlen($do_this_instead)== 0 && !array_key_exists($section_name,$sectures) && in_array($section_name,$hive_inner_attributes) == false && BEE_STRICT_HIVE == false && !$SWO ){
                 //alter table here and structure
                 $section_sql = hive_run_tn($section_name); 
                 $hra_res = hive_run_ac($connection,$section_name, $section_sql);
                 $errors = array_merge($errors, $hra_res[BEE_EI]);
                 //if there were any errors we cannot continue
                 if(count($hra_res[BEE_EI]) > 0){
-                    return array(null,$errors,$structure);
+                    return array(null,$errors,$hive_structure);
                 }
                 //add this section to the structure
                 $hive_structure[$comb_name][$section_name] = hive_run_default_secture();
                 file_put_contents("bee/".$hive_structure[BEE_FNN], json_encode($hive_structure));
             }
             $temp_path_to = $path . BEE_SEP . $section_name;
-            $sql = $sql . " " . $comb_name . "." . $section_name . " as ". $temp_path_to .",";
+            if(strlen($do_this_instead)>0){
+                $sql = $sql . " " . $do_this_instead .",";
+            }else{
+                $sql = $sql . " " . $comb_name . "." . $section_name . " as ". $temp_path_to .",";
+            }
         }
         return array($sql,$errors,$hive_structure);
     }

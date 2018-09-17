@@ -281,11 +281,13 @@
         "role_module":{
             "role_id":["fk"],
             "module_code": ["vcnn",30],
-            "status":["vcnn",30]
+            "status":["vcnn",30],
+            "_comment":"accessible things like menu item links"
         },
         "role_permisiion":{
             "role_id":["fk"],
-            "permission": ["vcnn",30]
+            "permission": ["vcnn",30],
+            "_comment":"The individual action items"
         },
         "user_role":{
             "user_id":["fk"],
@@ -369,5 +371,11 @@
         }
     },
     "is_restricted":true,
-    "sudo_delete":true
+    "sudo_delete":true,
+    "modules":[
+
+    ],
+    "permissions":[
+        
+    ]
 }

@@ -287,7 +287,7 @@
         $res = array(null,array(),$structure);
         //tools_dump("@0 == ",__FILE__,__LINE__,$nectoroid);
         $sr_res = segmentation_run($nectoroid,$structure,$connection);
-        //tools_dump("@1 segmentation_run res: ",__FILE__,__LINE__,$sr_res);
+        //tools_dump("@1 segmentation_run res: ",__FILE__,__LINE__,$sr_res[BEE_RI]);
         $hasr_res = hive_after_segmentation_run($sr_res,$nectoroid,$structure,$connection);
         $res[BEE_RI] = $hasr_res[BEE_RI];
         $res[BEE_EI] = array_merge($res[BEE_EI],$hasr_res[BEE_EI]);
@@ -314,6 +314,17 @@
             $GARDEN_STRUCTURE = $hrgg_res[2];
             //tools_reply($hrgg_res[BEE_RI],$BEE_ERRORS,array($BEE_GARDEN_CONNECTION));
             $BEE_GARDEN = $hrgg_res[BEE_RI];
+            //roles,permissions, modules
+            $security_nector = array(
+                "roles" => array(
+                    "role_permisiions" => array(),
+                    "role_modules" => array()
+                )
+            );
+            $brg_res = bee_run_get($security_nector,$BEE_HIVE_STRUCTURE["combs"],$BEE_HIVE_CONNECTION);
+            $BEE_ERRORS = array_merge($BEE_ERRORS,$brg_res[BEE_EI]);
+            tools_dumpx("brg_res",__FILE__,__LINE__,$brg_res[BEE_RI]);
+
             $BEE = array(
                 "BEE_HIVE_STRUCTURE" => $BEE_HIVE_STRUCTURE,
                 "BEE_GARDEN_STRUCTURE" => $GARDEN_STRUCTURE,

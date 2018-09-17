@@ -9,7 +9,7 @@ for inserting and updating records
 
 --updating
 invisible fields/ hidden fields
-attributes list
+--attributes list
 seeding
 validations
 multitenancy
@@ -37,3 +37,50 @@ offline access and synchronisation
 --sudo delete
 queues
 limits
+
+
+SELECT product.id, product.name, 
+(SELECT SUM(stockin_item.quantity) FROM stockin_item WHERE stockin_item.product_id = product.id) as q1,
+(SELECT SUM(stockout_item.quantity) FROM stockout_item WHERE stockout_item.product_id = product.id) as q2
+FROM `product`
+
+SELECT product.id, product.name, 
+(
+(SELECT SUM(stockin_item.quantity) FROM stockin_item WHERE stockin_item.product_id = product.id) -
+(SELECT SUM(stockout_item.quantity) FROM stockout_item WHERE stockout_item.product_id = product.id)
+) as q3
+FROM `product`
+where id = 6
+
+SELECT product.id as products__id, product.name as products__name,  
+(SELECT SUM(stockin_item.quantity) FROM stockin_item WHERE 
+    (stockin_item.is_deleted = 0) AND ( (  stockin_item.id > 1) AND ( stockin_item.product_id = product.id )))-
+(SELECT SUM(stockout_item.quantity) FROM stockout_item WHERE  
+    (stockout_item.is_deleted = 0) AND ( stockout_item.product_id = product.id )) as products__quantity, product.is_deleted as 
+    products__is_deleted FROM product  
+
+
+
+SELECT product.id as products__id, product.name as products__name,  
+(SELECT SUM(stockin_item.quantity) FROM stockin_item WHERE  (stockin_item.is_deleted = 0) AND ( (  stockin_item.id > 1) AND ( stockin_item.product_id = product.id )) )-
+(SELECT SUM(stockout_item.quantity) FROM stockout_item WHERE  (stockout_item.is_deleted = 0) AND ( stockout_item.product_id = product.id )) 
+as products__quantity, 
+product.is_deleted as products__is_deleted FROM product
+
+
+IFNULL(
+    (SELECT SUM(stockin_item.quantity)  FROM stockin_item WHERE  (stockin_item.is_deleted = 0) AND ( (  stockin_item.id > 1) AND ( stockin_item.product_id = 8 )) GROUP  BY stockin_item.product_id)
+,0) as products__quantity, 
+
+
+SELECT 
+product.id as products__id, 
+product.name as products__name,  
+(SELECT SUM(stockin_item.quantity) FROM stockin_item _fx_WHERE  (stockin_item.is_deleted = 0) AND ( (  stockin_item.id > 0) AND ( stockin_item.product_id = product.id )))-(SELECT SUM(stockout_item.quantity) FROM stockout_item _fx_WHERE  (stockout_item.is_deleted = 0) AND ( stockout_item.product_id = product.id )) as products__quantitxy, 
+product.is_deleted as products__is_deleted,   
+unit.id as products__unit__id, 
+unit.name as products__unit__name, 
+unit.symbol as products__unit__symbol, 
+unit.description as products__unit__description 
+FROM product  
+INNER JOIN unit ON product.unit_id=unit.id

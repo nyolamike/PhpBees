@@ -37,16 +37,24 @@ function hive_run($sql,$connection){
             $hive_response[BEE_RI]["hive_res"] = $res;
         }else if(tools_startsWith($sql,"SELECT") == TRUE){
             $ky = " WHERE ";
-            $where_pos = strpos($sql,$ky);
-            if(BEE_SUDO_DELETE && $where_pos > 0){
-                $prt1 = substr($sql,0,$where_pos);
-                $where_pos2 = $where_pos + strlen($ky);
-                $prt2 = substr($sql,$where_pos2);
-                $ky = " WHERE ( is_deleted = 0 ) AND ( ";
-                $sql2 = $prt1 . $ky . $prt2 . " ) ";
-                //tools_dumpx("SELECTs",__FILE__,__LINE__,array($prt1,$prt2,$sql,$sql2));
-                $sql = $sql2;
-            }
+            //nyd
+            //wrong position for where, should be shifted to a microposition
+            // $where_pos = strpos($sql,$ky);
+            // if(BEE_SUDO_DELETE && $where_pos > 0){
+            //     $prt1 = substr($sql,0,$where_pos);
+            //     $where_pos2 = $where_pos + strlen($ky);
+            //     $prt2 = substr($sql,$where_pos2);
+            //     $ky = " WHERE ( is_deleted = 0 ) AND ( ";
+            //     $sql2 = $prt1 . $ky . $prt2 . " ) ";
+            //     //tools_dumpx("SELECTs",__FILE__,__LINE__,array($prt1,$prt2,$sql,$sql2));
+            //     $sql = $sql2;
+            // }elseif(BEE_SUDO_DELETE){
+            //     $ky = " WHERE  is_deleted = 0 ";
+            //     $sql = $sql . $ky;
+            // }
+            //_fx_WHERE
+            $sql = str_replace("_fx_WHERE","WHERE",$sql);
+            //tools_dump("sql ",__FILE__,__LINE__,$sql);
             $res = $connection->query($sql);
             $data = array();
             foreach ($res as $row) {
@@ -636,6 +644,18 @@ function hive_run_register_hive($post_nectoroid,$bee){
         //tools_dumpx("bee_hive_post ",__FILE__,__LINE__,$brp_res);
 
         $bee["BEE_HIVE_CONNECTION"] = $connection;
+        //add a super role
+        $role_nector = array(
+            "role" => array(
+                "name" => "super role",
+                "description" => "The user with all permissions"
+            )
+        );
+        //nyd
+        //add all modules to this role
+        //add all permissions to this role
+        $brp_res = bee_hive_post($role_nector,$bee["BEE_HIVE_STRUCTURE"]["combs"],$bee["BEE_HIVE_CONNECTION"],0);
+        $res[BEE_EI] = array_merge($res[BEE_EI],$brp_res[BEE_EI]);
         //add the user as a system user
         $user_nector = array(
             "user" => array(
@@ -648,6 +668,7 @@ function hive_run_register_hive($post_nectoroid,$bee){
             )
         );
         $brp_res = bee_hive_post($user_nector,$bee["BEE_HIVE_STRUCTURE"]["combs"],$bee["BEE_HIVE_CONNECTION"],0);
+        $res[BEE_EI] = array_merge($res[BEE_EI],$brp_res[BEE_EI]);
         //give this user the role of super user
         //tools_dumpx("bee_hive_post ",__FILE__,__LINE__,$brp_res);
         
@@ -762,6 +783,12 @@ function bee_hive_run_login($post_nectoroid,$bee){
                     array("email","=",$email),
                     "AND",
                     array("status","=","active")
+                )
+            ),
+            "user_roles" => array(
+                "role" => array(
+                    "role_permisiions" => array(),
+                    "role_modules" => array()
                 )
             )
         )
