@@ -287,6 +287,10 @@
         "role_permisiion":{
             "role_id":["fk"],
             "permission": ["vcnn",30],
+            "can_create": ["inn",30,0],
+            "can_read": ["inn",30,0],
+            "can_update": ["inn",30,0],
+            "can_delete": ["inn",30,0],
             "_comment":"The individual action items"
         },
         "user_role":{
@@ -372,10 +376,5 @@
     },
     "is_restricted":true,
     "sudo_delete":true,
-    "modules":[
-
-    ],
-    "permissions":[
-        
-    ]
+    "permissions":[]
 }

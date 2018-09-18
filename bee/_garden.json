@@ -143,5 +143,15 @@
             "active"
         ]
     },
-    "_for": "_garden.json"
+    "_for": "_garden.json",
+    "_modules":[
+        {"sub_of":"","name":"point of sales","code":"pos","cost":300,"description":"the pos"},
+        {"sub_of":"","name":"print","code":"print","cost":300,"description":""},
+        {"sub_of":"","name":"inventory","code":"inventory","cost":300,"description":""},
+        {"sub_of":"","name":"clients","code":"clients","cost":300,"description":""},
+        {"sub_of":"","name":"suppliers","code":"suppliers","cost":300,"description":""},
+        {"sub_of":"","name":"reports","code":"reports","cost":300,"description":""},
+        {"sub_of":"","name":"security","code":"security","cost":300,"description":""},
+        {"sub_of":"","name":"configurations","code":"config","cost":300,"description":""}
+    ]
 }

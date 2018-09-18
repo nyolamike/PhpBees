@@ -30,6 +30,7 @@
     //load layers
     include("tools.php"); //utility layer
     include("Inflect.php"); //pluralisation layer
+    include("bee_security.php"); //security layer
     include("hive.php"); //database layer
     include("segmentation.php"); //interpretation layer
     include("sqllization.php"); //interpretation layer
@@ -137,14 +138,14 @@
     if(count($BEE_ERRORS)==0){
         $hrgg_res = hive_run_get_garden($BEE_GARDEN_STRUCTURE,$BEE_GARDEN_CONNECTION);
         $BEE_ERRORS = array_merge($BEE_ERRORS,$hrgg_res[BEE_EI]);
-        $GARDEN_STRUCTURE = $hrgg_res[2];
+        $BEE_GARDEN_STRUCTURE = $hrgg_res[2];
         //tools_reply($hrgg_res[BEE_RI],$BEE_ERRORS,array($BEE_GARDEN_CONNECTION));
         $BEE_GARDEN = $hrgg_res[BEE_RI];
     }
     define(BEE_ENFORCE_RELATIONSHIPS,false); //nyd get value from hive structure
     $BEE = array(
         "BEE_HIVE_STRUCTURE" => $BEE_HIVE_STRUCTURE,
-        "BEE_GARDEN_STRUCTURE" => $GARDEN_STRUCTURE,
+        "BEE_GARDEN_STRUCTURE" => $BEE_GARDEN_STRUCTURE,
         "BEE_GARDEN_CONNECTION" => $BEE_GARDEN_CONNECTION,
         "BEE_HIVE_CONNECTION" => null,
         "BEE_GARDEN" => $BEE_GARDEN,
@@ -175,6 +176,7 @@
             $res[BEE_EI] = array_merge($res[BEE_EI],$hrl_res[BEE_EI]);
             return $res; 
         }
+        
         //tools_dumpx("here in post",__FILE__,__LINE__,$nectoroid);
 
         //go through the entire nectorid processing
@@ -285,6 +287,7 @@
     
     function bee_run_get($nectoroid,$structure,$connection){
         $res = array(null,array(),$structure);
+        
         //tools_dump("@0 == ",__FILE__,__LINE__,$nectoroid);
         $sr_res = segmentation_run($nectoroid,$structure,$connection);
         //tools_dump("@1 segmentation_run res: ",__FILE__,__LINE__,$sr_res[BEE_RI]);
@@ -305,6 +308,10 @@
         ), $BEE);
         $BEE_HIVE_CONNECTION = $brrh_res[BEE_RI];
         $BEE["BEE_HIVE_CONNECTION"] = $BEE_HIVE_CONNECTION;
+        
+        
+        
+
         //nyd
         //get in the current state of the garden only if there was creation of new
         //hive, the current code  below will run allways 
@@ -323,9 +330,11 @@
             );
             $brg_res = bee_run_get($security_nector,$BEE_HIVE_STRUCTURE["combs"],$BEE_HIVE_CONNECTION);
             $BEE_ERRORS = array_merge($BEE_ERRORS,$brg_res[BEE_EI]);
-            tools_dumpx("brg_res",__FILE__,__LINE__,$brg_res[BEE_RI]);
+            $BEE_ROLES = $brg_res[BEE_RI]["roles"];
+            //tools_dumpx("brg_res",__FILE__,__LINE__,$brg_res[BEE_RI]);
 
             $BEE = array(
+                "BEE_ROLES" => $BEE_ROLES,
                 "BEE_HIVE_STRUCTURE" => $BEE_HIVE_STRUCTURE,
                 "BEE_GARDEN_STRUCTURE" => $GARDEN_STRUCTURE,
                 "BEE_GARDEN_CONNECTION" => $BEE_GARDEN_CONNECTION,
@@ -395,11 +404,31 @@
                 $res[BEE_EI] = array_merge($tsji_res[BEE_EI],$res[BEE_EI]);
                 if(count($res[BEE_EI])==0){//no errors
                     $querydata = $tsji_res[BEE_RI];
-                    //tools_dumpx("querydata",__FILE__,__LINE__,$querydata);
-                    $brp_res = bee_run_get($querydata,$bee["BEE_HIVE_STRUCTURE"]["combs"],$bee["BEE_HIVE_CONNECTION"]);
-                    //tools_dumpx("brp_res get ",__FILE__,__LINE__,$brp_res);
-                    $res[BEE_EI] = array_merge($res[BEE_EI],$brp_res[BEE_EI]);
-                    $res[BEE_RI] = $brp_res[BEE_RI];
+                    //get system modules
+                    if(array_key_exists("_f_modules",$querydata)){
+                        $res[BEE_RI] = bee_security_modules($bee);
+                    }elseif(array_key_exists("_f_permissions",$querydata)){
+                        $res[BEE_RI] =  bee_security_permissions($bee);
+                    }else{
+                        //authorise
+                        $bsv_res = bee_security_authorise(
+                            $bee["BEE_USER"],
+                            $querydata,
+                            $bee["BEE_HIVE_STRUCTURE"]["combs"],
+                            false, //create
+                            true, //read
+                            false, //update
+                            false //delete
+                        );
+                        $res[BEE_EI] = array_merge($res[BEE_EI],$bsv_res[BEE_EI]);
+                        if(count($res[BEE_EI])==0){//no errors
+                            //tools_dumpx("querydata",__FILE__,__LINE__,$querydata);
+                            $brp_res = bee_run_get($querydata,$bee["BEE_HIVE_STRUCTURE"]["combs"],$bee["BEE_HIVE_CONNECTION"]);
+                            //tools_dumpx("brp_res get ",__FILE__,__LINE__,$brp_res);
+                            $res[BEE_EI] = array_merge($res[BEE_EI],$brp_res[BEE_EI]);
+                            $res[BEE_RI] = $brp_res[BEE_RI];
+                        }
+                    }  
                 }
             }else{
                 //there is nothing to process
@@ -419,11 +448,24 @@
                 $res[BEE_EI] = array_merge($tsji_res[BEE_EI],$res[BEE_EI]);
                 if(count($res[BEE_EI])==0){//no errors
                     $postdata = $tsji_res[BEE_RI];
-                    //tools_dumpx("postdata",__FILE__,__LINE__,$postdata);
-                    $brp_res = bee_run_post($postdata,$bee,$bee["BEE_USER"]["id"]);
-                    //tools_dumpx("brp_res post ",__FILE__,__LINE__,$brp_res);
-                    $res[BEE_EI] = array_merge($res[BEE_EI],$brp_res[BEE_EI]);
-                    $res[BEE_RI] = $brp_res[BEE_RI];
+                    //authorise
+                    $bsv_res = bee_security_authorise(
+                        $bee["BEE_USER"],
+                        $postdata,
+                        $bee["BEE_HIVE_STRUCTURE"]["combs"],
+                        true, //create
+                        false, //read
+                        false, //update
+                        false //delete
+                    );
+                    $res[BEE_EI] = array_merge($res[BEE_EI],$bsv_res[BEE_EI]);
+                    if(count($res[BEE_EI])==0){//no errors
+                        //tools_dumpx("postdata",__FILE__,__LINE__,$postdata);
+                        $brp_res = bee_run_post($postdata,$bee,$bee["BEE_USER"]["id"]);
+                        //tools_dumpx("brp_res post ",__FILE__,__LINE__,$brp_res);
+                        $res[BEE_EI] = array_merge($res[BEE_EI],$brp_res[BEE_EI]);
+                        $res[BEE_RI] = $brp_res[BEE_RI];
+                    }
                 }
             }
         }else if($_SERVER["REQUEST_METHOD"] == "PUT"){
@@ -440,12 +482,26 @@
                 $res[BEE_EI] = array_merge($tsji_res[BEE_EI],$res[BEE_EI]);
                 if(count($res[BEE_EI])==0){//no errors
                     $postdata = $tsji_res[BEE_RI];
-                    //tools_dumpx("postdata",__FILE__,__LINE__,$postdata);
-                    $brp_res = bee_run_update($postdata,$bee,$bee["BEE_USER"]["id"]);
-                    //tools_dumpx("brp_res put ",__FILE__,__LINE__,$brp_res);
-                    $res[BEE_EI] = array_merge($res[BEE_EI],$brp_res[BEE_EI]);
-                    $res[BEE_RI] = $brp_res[BEE_RI];
+                    //authorise
+                    $bsv_res = bee_security_authorise(
+                        $bee["BEE_USER"],
+                        $postdata,
+                        $bee["BEE_HIVE_STRUCTURE"]["combs"],
+                        false, //create
+                        false, //read
+                        true, //update
+                        false //delete
+                    );
+                    $res[BEE_EI] = array_merge($res[BEE_EI],$bsv_res[BEE_EI]);
+                    if(count($res[BEE_EI])==0){//no errors
+                        //tools_dumpx("postdata",__FILE__,__LINE__,$postdata);
+                        $brp_res = bee_run_update($postdata,$bee,$bee["BEE_USER"]["id"]);
+                        //tools_dumpx("brp_res put ",__FILE__,__LINE__,$brp_res);
+                        $res[BEE_EI] = array_merge($res[BEE_EI],$brp_res[BEE_EI]);
+                        $res[BEE_RI] = $brp_res[BEE_RI];
+                    }
                 }
+                
             }
         }else if($_SERVER["REQUEST_METHOD"] == "UPDATE"){
             $method = "put";
@@ -459,11 +515,24 @@
             $res[BEE_EI] = array_merge($tsji_res[BEE_EI],$res[BEE_EI]);
             if(count($res[BEE_EI])==0){//no errors
                 $postdata = $tsji_res[BEE_RI];
-                //tools_dumpx("postdata",__FILE__,__LINE__,$postdata);
-                $brd_res = bee_run_delete($postdata,$bee,$bee["BEE_USER"]["id"]);
-                //tools_dumpx("brd_res delete ",__FILE__,__LINE__,$brd_res);
-                $res[BEE_EI] = array_merge($res[BEE_EI],$brd_res[BEE_EI]);
-                $res[BEE_RI] = $brd_res[BEE_RI];
+                //authorise
+                $bsv_res = bee_security_authorise(
+                    $bee["BEE_USER"],
+                    $postdata,
+                    $bee["BEE_HIVE_STRUCTURE"]["combs"],
+                    false, //create
+                    false, //read
+                    false, //update
+                    true //delete
+                );
+                $res[BEE_EI] = array_merge($res[BEE_EI],$bsv_res[BEE_EI]);
+                if(count($res[BEE_EI])==0){//no errors
+                    //tools_dumpx("postdata",__FILE__,__LINE__,$postdata);
+                    $brd_res = bee_run_delete($postdata,$bee,$bee["BEE_USER"]["id"]);
+                    //tools_dumpx("brd_res delete ",__FILE__,__LINE__,$brd_res);
+                    $res[BEE_EI] = array_merge($res[BEE_EI],$brd_res[BEE_EI]);
+                    $res[BEE_RI] = $brd_res[BEE_RI];
+                }
             }
         }
 

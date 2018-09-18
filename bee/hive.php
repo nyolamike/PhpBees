@@ -642,22 +642,20 @@ function hive_run_register_hive($post_nectoroid,$bee){
         //post data into hive
         $brp_res = bee_hive_post($nectoroid,$bee["BEE_GARDEN_STRUCTURE"],$bee["BEE_GARDEN_CONNECTION"],0);
         //tools_dumpx("bee_hive_post ",__FILE__,__LINE__,$brp_res);
-
         $bee["BEE_HIVE_CONNECTION"] = $connection;
+        
+        
+        //nyd
+        //add all modules to this hive in the master db
+
         //add a super role
         $role_nector = array(
             "role" => array(
                 "name" => "super role",
                 "description" => "The user with all permissions"
-            )
-        );
-        //nyd
-        //add all modules to this role
-        //add all permissions to this role
-        $brp_res = bee_hive_post($role_nector,$bee["BEE_HIVE_STRUCTURE"]["combs"],$bee["BEE_HIVE_CONNECTION"],0);
-        $res[BEE_EI] = array_merge($res[BEE_EI],$brp_res[BEE_EI]);
-        //add the user as a system user
-        $user_nector = array(
+            ),
+            "role_modules" => array(),
+            "role_permisiions" => array(),
             "user" => array(
                 "name" => $post_nectoroid["_f_register"]["name"],
                 "email" => $post_nectoroid["_f_register"]["email"],
@@ -665,12 +663,42 @@ function hive_run_register_hive($post_nectoroid,$bee){
                 "is_owner" => 1,
                 "password" => $password,
                 "status" => "active"
+            ),
+            "user_role" => array(
+                "_fk_user_id" => "user",
+                "_fk_role_id" => "role",
+                "status" => "active"
             )
         );
-        $brp_res = bee_hive_post($user_nector,$bee["BEE_HIVE_STRUCTURE"]["combs"],$bee["BEE_HIVE_CONNECTION"],0);
-        $res[BEE_EI] = array_merge($res[BEE_EI],$brp_res[BEE_EI]);
-        //give this user the role of super user
-        //tools_dumpx("bee_hive_post ",__FILE__,__LINE__,$brp_res);
+        //register all modules of this system to this hive
+        //since its the none public distribution kind
+        $system_modules = $bee["BEE_GARDEN_STRUCTURE"]["_modules"];
+        foreach ($system_modules as $system_module ) {
+            $role_module = array(
+                "_fk_role_id" => "role",
+                "module_code" => $system_module["code"],
+                "status" => "active" 
+            );
+            array_push($role_nector["role_modules"],$role_module);
+        }
+        //permissions
+        //the super role has access to all system permissions
+        $combs = $bee["BEE_HIVE_STRUCTURE"]["combs"];
+        foreach ($combs as $combs_name => $combs_def) {
+            $role_permisiion = array(
+                "_fk_role_id" => "role",
+                "permission" => $combs_name,
+                "can_create" => 1,
+                "can_read" => 1,
+                "can_update" => 1,
+                "can_delete" => 1
+            );
+            array_push($role_nector["role_permisiions"],$role_permisiion);
+        }
+        $bhp_res2 = bee_hive_post($role_nector,$combs,$bee["BEE_HIVE_CONNECTION"],0);
+        $res[BEE_EI] = array_merge($res[BEE_EI],$bhp_res2[BEE_EI]);
+        
+        
         
         $res[BEE_RI] = $connection;
     }
