@@ -107,7 +107,7 @@
                         continue;
                     }
                 }  
-                $diff_sql = "(" . $diff_param_a . ")-(".$diff_param_b.")";
+                $diff_sql = "IFNULL((" . $diff_param_a . "),0)-IFNULL((".$diff_param_b."),0)";
                 $fxsql = $fxsql . " " . $diff_sql;
             }
         }

@@ -54,6 +54,9 @@ function hive_run($sql,$connection){
             // }
             //_fx_WHERE
             $sql = str_replace("_fx_WHERE","WHERE",$sql);
+            // if(strpos($sql,"-")>0){
+            //     tools_dump("sql ",__FILE__,__LINE__,$sql);
+            // }
             //tools_dump("sql ",__FILE__,__LINE__,$sql);
             $res = $connection->query($sql);
             $data = array();
