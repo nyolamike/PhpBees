@@ -164,19 +164,7 @@
     function bee_run_post($nectoroid,$bee,$user_id){
         $res = array(null,array(),null);
 
-        //the login 
-        //it has to be the only thing in its request
-        if(array_key_exists("_f_login",$nectoroid)){
-            $whole_honey = array();
-            $login_nector = array(
-                "_f_login" => $nectoroid["_f_login"]
-            );
-            $hrl_res = bee_hive_run_login($login_nector, $bee);
-            $whole_honey["_f_login"] = $hrl_res[BEE_RI];
-            $res[BEE_RI] = $whole_honey["_f_login"];
-            $res[BEE_EI] = array_merge($res[BEE_EI],$hrl_res[BEE_EI]);
-            return $res; 
-        }
+        
         
         //tools_dumpx("here in post",__FILE__,__LINE__,$nectoroid);
 
@@ -463,23 +451,36 @@
                 $res[BEE_EI] = array_merge($tsji_res[BEE_EI],$res[BEE_EI]);
                 if(count($res[BEE_EI])==0){//no errors
                     $postdata = $tsji_res[BEE_RI];
-                    //authorise
-                    $bsv_res = bee_security_authorise(
-                        $bee["BEE_USER"],
-                        $postdata,
-                        $bee["BEE_HIVE_STRUCTURE"]["combs"],
-                        true, //create
-                        false, //read
-                        false, //update
-                        false //delete
-                    );
-                    $res[BEE_EI] = array_merge($res[BEE_EI],$bsv_res[BEE_EI]);
-                    if(count($res[BEE_EI])==0){//no errors
-                        //tools_dumpx("postdata",__FILE__,__LINE__,$postdata);
-                        $brp_res = bee_run_post($postdata,$bee,$bee["BEE_USER"]["id"]);
-                        //tools_dumpx("brp_res post ",__FILE__,__LINE__,$brp_res);
-                        $res[BEE_EI] = array_merge($res[BEE_EI],$brp_res[BEE_EI]);
-                        $res[BEE_RI] = $brp_res[BEE_RI];
+                    //the login 
+                    //it has to be the only thing in its request
+                    if(array_key_exists("_f_login",$postdata)){
+                        $whole_honey = array();
+                        $login_nector = array(
+                            "_f_login" => $postdata["_f_login"]
+                        );
+                        $hrl_res = bee_hive_run_login($login_nector, $bee);
+                        $whole_honey["_f_login"] = $hrl_res[BEE_RI];
+                        $res[BEE_RI] = $whole_honey["_f_login"];
+                        $res[BEE_EI] = array_merge($res[BEE_EI],$hrl_res[BEE_EI]); 
+                    }else{
+                        //authorise
+                        $bsv_res = bee_security_authorise(
+                            $bee["BEE_USER"],
+                            $postdata,
+                            $bee["BEE_HIVE_STRUCTURE"]["combs"],
+                            true, //create
+                            false, //read
+                            false, //update
+                            false //delete
+                        );
+                        $res[BEE_EI] = array_merge($res[BEE_EI],$bsv_res[BEE_EI]);
+                        if(count($res[BEE_EI])==0){//no errors
+                            //tools_dumpx("postdata",__FILE__,__LINE__,$postdata);
+                            $brp_res = bee_run_post($postdata,$bee,$bee["BEE_USER"]["id"]);
+                            //tools_dumpx("brp_res post ",__FILE__,__LINE__,$brp_res);
+                            $res[BEE_EI] = array_merge($res[BEE_EI],$brp_res[BEE_EI]);
+                            $res[BEE_RI] = $brp_res[BEE_RI];
+                        }
                     }
                 }
             }
