@@ -202,6 +202,10 @@
         "_comment2":"Deletes has a _w flag"
     }
 
+    print_aspect: {
+            print_aspect_kind:{}
+        }
+
     */
     
 ?>

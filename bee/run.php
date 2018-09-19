@@ -448,8 +448,9 @@
                         if(count($res[BEE_EI])==0){//no errors
                             //tools_dumpx("querydata",__FILE__,__LINE__,$querydata);
                             $brp_res = bee_run_get($querydata,$bee["BEE_HIVE_STRUCTURE"]["combs"],$bee["BEE_HIVE_CONNECTION"]);
-                            //tools_dumpx("brp_res get ",__FILE__,__LINE__,$brp_res);
+                            //tools_dump("brp_res get ",__FILE__,__LINE__,$res[BEE_EI]);
                             $res[BEE_EI] = array_merge($res[BEE_EI],$brp_res[BEE_EI]);
+                            //tools_dump("brp_res gets ",__FILE__,__LINE__,$res[BEE_EI]);
                             $res[BEE_RI] = $brp_res[BEE_RI];
                         }
                     }  

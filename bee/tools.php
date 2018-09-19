@@ -159,7 +159,7 @@
         }
         //The response
         $data["_errors"] = ($errors == null)?array(): $errors;
-        if($errors == null){
+        if($errors == null && is_array($errors) == false){
             $data["_comment"] = "Errors array was actually null, probably something went wrong internally";
         }
         
