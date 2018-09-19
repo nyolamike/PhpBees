@@ -47,6 +47,11 @@
         if(BEE_DRONE_SECURITY_ENABLED == false){//just skip authentication layer
             return $res;
         }
+        if(!array_key_exists("user_roles",$token_user)){
+            array_push($res[BEE_EI],"Processing authorisation failed probably you are missing an authentication header");
+            return $res;
+        }
+        //tools_dumpx("token_user",__FILE__,__LINE__,$token_user);
         $user_roles = $token_user["user_roles"];
         $nector_combs = bee_security_extract_targets(array(),$nectoroid,$hive_combs);
         $user_perms = array();
