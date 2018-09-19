@@ -695,9 +695,14 @@ function hive_run_register_hive($post_nectoroid,$bee){
             );
             array_push($role_nector["role_permisiions"],$role_permisiion);
         }
-        $bhp_res2 = bee_hive_post($role_nector,$combs,$bee["BEE_HIVE_CONNECTION"],0);
-        $res[BEE_EI] = array_merge($res[BEE_EI],$bhp_res2[BEE_EI]);
-        
+        $brp_res2 = bee_run_post($role_nector,$bee,0); //bee_hive_post($role_nector,$combs,$bee["BEE_HIVE_CONNECTION"],0);
+        $res[BEE_EI] = array_merge($res[BEE_EI],$brp_res2[BEE_EI]);
+        //seeding
+        if(array_key_exists("seeds",$bee["BEE_HIVE_STRUCTURE"])){
+            $seeds = $bee["BEE_HIVE_STRUCTURE"]["seeds"];
+            $brp_res3 = bee_run_post($seeds,$bee,0); //bee_hive_post($seeds,$combs,$bee["BEE_HIVE_CONNECTION"],0);
+            $res[BEE_EI] = array_merge($res[BEE_EI],$brp_res3[BEE_EI]);
+        }
         
         
         $res[BEE_RI] = $connection;

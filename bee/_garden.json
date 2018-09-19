@@ -149,8 +149,9 @@
         {"sub_of":"","name":"print","code":"print","cost":300,"description":""},
         {"sub_of":"","name":"inventory","code":"inventory","cost":300,"description":""},
         {"sub_of":"","name":"clients","code":"clients","cost":300,"description":""},
-        {"sub_of":"","name":"suppliers","code":"suppliers","cost":300,"description":""},
-        {"sub_of":"","name":"reports","code":"reports","cost":300,"description":""},
+        {"sub_of":"","name":"suppliers","code":"supplier","cost":300,"description":""},
+        {"sub_of":"","name":"calenders","code":"calender","cost":300,"description":""},
+        {"sub_of":"","name":"reports","code":"report","cost":300,"description":""},
         {"sub_of":"","name":"security","code":"security","cost":300,"description":""},
         {"sub_of":"","name":"configurations","code":"config","cost":300,"description":""}
     ]

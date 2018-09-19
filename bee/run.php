@@ -30,6 +30,7 @@
     //load layers
     include("tools.php"); //utility layer
     include("Inflect.php"); //pluralisation layer
+    include("countries_data.php"); //countries data
     include("bee_security.php"); //security layer
     include("hive.php"); //database layer
     include("segmentation.php"); //interpretation layer
@@ -298,6 +299,11 @@
         return $res; 
     }
 
+    if(array_key_exists("drone_security_enabled",$BEE_HIVE_STRUCTURE)){
+        $dse = $BEE_HIVE_STRUCTURE["drone_security_enabled"];
+        define(BEE_DRONE_SECURITY_ENABLED,$dse);
+    }
+
 
     //this is the last in this file
     //register my application
@@ -359,7 +365,8 @@
         $token_string = null;
         $headers = apache_request_headers();
         if($headers == null){
-            return null;
+            array_push($res[BEE_EI],"Request missing headers");
+            return $res;
         }
         if(isset($headers["Authorization"]) && stripos($headers["Authorization"],"Bearer ") > -1){
             $token_string = str_ireplace("Bearer ","",$headers["Authorization"]);
@@ -389,9 +396,9 @@
                 $msg = $e->getMessage();
                 array_push($res[BEE_EI],$msg);
             }
-                
-
         }
+
+        
         
     
         if($_SERVER["REQUEST_METHOD"] == "GET"){
@@ -409,6 +416,14 @@
                         $res[BEE_RI] = bee_security_modules($bee);
                     }elseif(array_key_exists("_f_permissions",$querydata)){
                         $res[BEE_RI] =  bee_security_permissions($bee);
+                    }elseif(array_key_exists("_f_countries",$querydata)){
+                        $res[BEE_RI] =  $countries_list;
+                    }elseif(array_key_exists("_f_bee",$querydata)){
+                        $res[BEE_RI] =  array(
+                            "bee" => array(
+                                "date" => date("Y-m-d")
+                            )
+                        );
                     }else{
                         //authorise
                         $bsv_res = bee_security_authorise(

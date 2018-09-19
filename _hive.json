@@ -198,6 +198,19 @@
             "selling_price":["dnn",30],
             "total_selling_price":["dnn",30]
         },
+        "supplier":{
+            "name": ["vcnn",30],
+            "phone_number": ["vcn",30],
+            "email": ["vcn",30],
+            "post_address": ["vcn",30],
+            "physical_address": ["vcn",30]
+        },
+        "supplier_product":{
+            "supplier_id": ["fk"],
+            "product_id": ["fk"],
+            "unit_id":["fk"],
+            "cost_price":["dnn",30,"__","At what price does this person sell to us"]
+        },
         "print_aspect_kind":{
             "name": ["vcnn",30],
             "description":["tn"],
@@ -315,13 +328,12 @@
         }
     },
     "seeds":{
-        "payment_types":[
-            {"name":"cash","description":"payment by cash"}
-        ],
+        "payment_types":[{"name":"cash","description":"payment by cash"}],
         "clients":[
-            {   
-                "name":"DEFAULT",
-                "phone_numner":""
+            {
+                "name":"DEFAULT", 
+                "phone_number":"+25x",
+                "email": "default email"
             }
         ],
         "sections":[
@@ -376,5 +388,6 @@
     },
     "is_restricted":true,
     "sudo_delete":true,
-    "permissions":[]
+    "permissions":[],
+    "drone_security_enabled": true
 }

@@ -10,10 +10,10 @@ for inserting and updating records
 --updating
 invisible fields/ hidden fields
 --attributes list
-seeding
+--seeding
 validations
 multitenancy
-roles based security (menu items,action items)
+--roles based security (menu items,action items)
 logging/audit trails
 group
 order by/ sorting
@@ -37,6 +37,7 @@ offline access and synchronisation
 --sudo delete
 queues
 limits
+--fx calculations
 
 
 SELECT product.id, product.name, 

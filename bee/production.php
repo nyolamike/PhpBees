@@ -22,12 +22,14 @@
     
     //to convert sqls into raw honey
     function production_post($sqls,$connection,$prev_res=array()){
+        //tools_dump("production_post",__FILE__,__LINE__,$sqls);
         $res = array(array(),array());
         foreach ($sqls as $sql_index => $sql) {
             //tools_dump("prev_res",__FILE__,__LINE__,$prev_res);
             if(is_array($sql)){
                 $res[BEE_RI][$sql_index] = array(); 
                 foreach ($sql as $index => $cmd) {
+                    //tools_dump("cmd",__FILE__,__LINE__,$cmd);
                     //nyd
                     //look for fk replacements if any
                     //the use of !== is deliberate
@@ -52,6 +54,9 @@
                         }
                         //tools_dumpx("cmdx",__FILE__,__LINE__,$cmd);
                     }
+                    // if(strpos($cmd, "client") !== false){
+                    //     tools_dump("cmd",__FILE__,__LINE__,$cmd);
+                    // }
                     $hr_res = hive_run($cmd,$connection);
                     //tools_dumpx("hr_res",__FILE__,__LINE__,$hr_res);
                     $res[BEE_EI] = array_merge($res[BEE_EI],$hr_res[BEE_EI]);
@@ -83,6 +88,9 @@
                     }
                 }
                 //tools_dump("sql",__FILE__,__LINE__,$sql);
+                // if(strpos($sql, "client") !== false){
+                //     tools_dump("sql",__FILE__,__LINE__,$sql);
+                // }
                 $hr_res = hive_run($sql,$connection);
                 //tools_dumpx("hr_res",__FILE__,__LINE__,$hr_res);
                 $res[BEE_EI] = array_merge($res[BEE_EI],$hr_res[BEE_EI]);

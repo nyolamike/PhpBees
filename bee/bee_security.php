@@ -44,6 +44,9 @@
 
     function bee_security_authorise($token_user,$nectoroid,$hive_combs,$can_create=false,$can_read=false,$can_update=false,$can_delete=false){
         $res = array(true,array());
+        if(BEE_DRONE_SECURITY_ENABLED == false){//just skip authentication layer
+            return $res;
+        }
         $user_roles = $token_user["user_roles"];
         $nector_combs = bee_security_extract_targets(array(),$nectoroid,$hive_combs);
         $user_perms = array();
@@ -71,23 +74,29 @@
         }
         //all the $nector_combs must pass
         $str = json_encode($nectoroid);
+        $failed_keys = array();
         foreach ($nector_combs as $nector_comb) {
-            if(array_key_exists($nector_comb,$user_perms)){
+            if(array_key_exists($nector_comb,$user_perms) && !in_array($nector_comb,$failed_keys)){
                 $p = $user_perms[$nector_comb];
                 if($can_create == true && $p[0] == 0){
                     array_push($res[BEE_EI],"Not authorised to create this resource " . $nector_comb . " in " . $str);
+                    array_push($failed_keys,$nector_comb);
                 }
                 if($can_read == true && $p[1] == 0){
                     array_push($res[BEE_EI],"Not authorised to read from this resource " . $nector_comb . " in " . $str);
+                    array_push($failed_keys,$nector_comb);
                 }
                 if($can_update == true && $p[2] == 0){
                     array_push($res[BEE_EI],"Not authorised to edit this resource " . $nector_comb . " in " . $str);
+                    array_push($failed_keys,$nector_comb);
                 }
                 if($can_delete == true && $p[3] == 0){
                     array_push($res[BEE_EI],"Not authorised to delete this resource " . $nector_comb . " in " . $str);
+                    array_push($failed_keys,$nector_comb);
                 }
-            }else{
+            }elseif(!in_array($nector_comb,$failed_keys)){
                 array_push($res[BEE_EI],"Not authorised to access this resource " . $nector_comb . " in " . $str);
+                array_push($failed_keys,$nector_comb);
             }
         }
         if(count($res[BEE_EI])>0){
