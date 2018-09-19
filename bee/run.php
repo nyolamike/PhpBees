@@ -53,6 +53,7 @@
     define(BEE_JWT_ISSUER,"mysuperapp");
     define(BEE_STRICT_HIVE,false);
     $BEE_JWT_ALGORITHM = new Emarref\Jwt\Algorithm\Hs256(BEE_APP_SECRET);
+    //$BEE_JWT_ALGORITHM = new Emarref\Jwt\Algorithm\Rs256(BEE_APP_SECRET);
     $BEE_JWT_ENCRYPTION = Emarref\Jwt\Encryption\Factory::create($BEE_JWT_ALGORITHM);
     define(BEE_RI,0);//RESULTS INDEX
     define(BEE_EI,1);//ERROR INDEX
@@ -374,9 +375,29 @@
             try {
                 $jwt->verify($token, $context);
                 $payload = $token->getPayload();
-                $current_user = $payload->findClaimByName("user")->getValue();
+                $current_user_id = $payload->findClaimByName("user")->getValue();
                 $an = $payload->findClaimByName("app_name")->getValue();
+                $user_nector = array(
+                    "users" => array(
+                        "_w" => array(
+                            array(
+                                "id","=",$current_user_id
+                            )
+                        ),
+                        "user_roles" => array(
+                            "role" => array(
+                                "role_permisiions" => array(),
+                                "role_modules" => array()
+                            )
+                        )
+                    )
+                );
+                $brg_res = bee_run_get($user_nector,$bee["BEE_HIVE_STRUCTURE"]["combs"],$bee["BEE_HIVE_CONNECTION"]);
+                $res[BEE_EI] = array_merge($res[BEE_EI],$brg_res[BEE_EI]);
+                $current_user = $brg_res[BEE_RI]["users"][0];
                 //tools_dumpx("foo",__FILE__,__LINE__,$current_user);
+                
+
                 $bee["BEE_USER"] = $current_user;
                 $bee["BEE_APP_NAME"] = $an;
                 //get connection

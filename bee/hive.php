@@ -817,12 +817,6 @@ function bee_hive_run_login($post_nectoroid,$bee){
                     "AND",
                     array("status","=","active")
                 )
-            ),
-            "user_roles" => array(
-                "role" => array(
-                    "role_permisiions" => array(),
-                    "role_modules" => array()
-                )
             )
         )
     );
@@ -855,8 +849,11 @@ function bee_hive_run_login($post_nectoroid,$bee){
                 $token->addClaim(new Emarref\Jwt\Claim\NotBefore(new \DateTime('now')));
                 $token->addClaim(new Emarref\Jwt\Claim\Subject('api'));
 
+                unset($foundUser["password"]);
+                //tools_reply($foundUser,array(),array());
+                
                 // Custom claims are supported
-                $token->addClaim(new Emarref\Jwt\Claim\PublicClaim('user', $foundUser));
+                $token->addClaim(new Emarref\Jwt\Claim\PublicClaim('user', $foundUser["id"]));
                 $token->addClaim(new Emarref\Jwt\Claim\PublicClaim('app_name',$app_name));
                 //nyd
                 //add roles etc
