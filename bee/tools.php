@@ -158,7 +158,11 @@
             $conn = null;
         }
         //The response
-        $data["_errors"] = ($errors == null)?array("Something may have gone wrong"): $errors;
+        $data["_errors"] = ($errors == null)?array(): $errors;
+        if($errors == null){
+            $data["_comment"] = "Errors array was actually null, probably something went wrong internally";
+        }
+        
 		//include the header 
         header("Content-type: application/json"); 
         $res =  json_encode($data);
