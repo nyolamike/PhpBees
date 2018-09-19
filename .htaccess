@@ -1,9 +1,4 @@
-
-
 RewriteEngine on
-
-LimitRequestBody 2147483647
-
 RewriteCond %{SCRIPT_FILENAME} !-f
 RewriteCond %{SCRIPT_FILENAME} !-d
 RewriteCond %{SCRIPT_FILENAME} !-l

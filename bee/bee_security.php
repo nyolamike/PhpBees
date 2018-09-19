@@ -36,8 +36,7 @@
             if(array_key_exists($keysingle,$hive_combs) && !array_key_exists($keysingle,$found)){
                 array_push($found,$keysingle);
             }
-            $childs = bee_security_extract_targets($found,$node_value,$hive_combs);
-            $found = array_merge($found, $childs); 
+            $found = bee_security_extract_targets($found,$node_value,$hive_combs);
         }
         return $found;
     }
@@ -54,6 +53,7 @@
         //tools_dumpx("token_user",__FILE__,__LINE__,$token_user);
         $user_roles = $token_user["user_roles"];
         $nector_combs = bee_security_extract_targets(array(),$nectoroid,$hive_combs);
+        //tools_dumpx("nector_combs security",__FILE__,__LINE__,$nector_combs);
         $user_perms = array();
         foreach ($user_roles as $ind => $user_role) {
             if(array_key_exists("role",$user_role)){

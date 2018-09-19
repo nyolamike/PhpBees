@@ -158,7 +158,7 @@
             $conn = null;
         }
         //The response
-        $data["_errors"] = $errors;
+        $data["_errors"] = ($errors == null)?array("Something may have gone wrong"): $errors;
 		//include the header 
         header("Content-type: application/json"); 
         $res =  json_encode($data);
