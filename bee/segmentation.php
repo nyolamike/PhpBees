@@ -54,7 +54,8 @@
             "temp_sections_sql" => "",
             "temp_children" => array(),
             "temp_inner_join_sql" => "",
-            "temp_where_sql" => ""
+            "temp_where_sql" => "",
+            "temp_groupby_sql" => ""
         ),array());
 
 
@@ -123,6 +124,23 @@
                 }
                 continue;
             }
+
+            if($node_key == "_gb" || $node_key == "_g"){
+                $str_temp = "";
+                foreach ($node_key_value as $gbi) { //group by item
+                    if(strpos($gbi,".")>0){
+                        $gbis = explode(".",$gbi);
+                        $cnx = Inflect::singularize($gbis[0]); 
+                        $str_temp = $str_temp .  ($cnx.".".$gbis[1]) . ", ";
+                    }else{
+                        $str_temp = $str_temp .  ($comb_name .".".$gbi) . ", ";
+                    }
+                }
+                $res[BEE_RI]["temp_groupby_sql"] = $str_temp;
+                continue;
+            }
+
+
 
 
             //if execution reaches here it means this is a child node or parent node

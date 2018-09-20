@@ -28,6 +28,14 @@
                 $sql = $sql . " WHERE " . $where_sql;
                 //tools_dump("sql for " . $root_node_name,__FILE__,__LINE__,$sql);
             }
+            //groub by
+            if(array_key_exists("temp_groupby_sql",$segmentation)){
+                $gb = $segmentation["temp_groupby_sql"];
+                $gb = trim(trim($gb),",");
+                if(strlen($gb)>0){
+                    $sql = $sql . " GROUP BY " . $gb;
+                }
+            }
             //tools_dump("sql for ",__FILE__,__LINE__,$sql);
             //nyd
             //walk backwards to include code to generate paths to clean
