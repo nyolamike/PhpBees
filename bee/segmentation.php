@@ -56,7 +56,8 @@
             "temp_inner_join_sql" => "",
             "temp_where_sql" => "",
             "temp_groupby_sql" => "",
-            "temp_orderby_sql" => null
+            "temp_orderby_sql" => null,
+            "temp_limit_sql" => null
         ),array());
 
 
@@ -167,7 +168,25 @@
                 continue;
             }
 
-
+            //limit offset pagination
+            if($node_key == "_pg"){
+                $pgs = explode(".",strval($node_key_value));
+                $limit = intval($pgs[0]);
+                $page_number = count($pgs)>1?intval($pgs[1]):0;
+                if($page_number > 0){
+                    $offset = ($page_number-1) * $limit;
+                    $res[BEE_RI]["temp_limit_sql"] = array(
+                        "limit" => $limit,
+                        "offset" => $offset
+                    );
+                }else{
+                    $res[BEE_RI]["temp_limit_sql"] = array(
+                        "limit" => $limit,
+                        "offset" => null
+                    );
+                }
+                continue;
+            }
 
 
 
@@ -203,7 +222,7 @@
                 $res[BEE_RI]["temp_children"] =  $s_res[BEE_RI]["temp_children"];
 
                 
-                if($SWO){
+            if($SWO){
                     $res[BEE_RI]["temp_inner_join_sql"] .= " INNER JOIN ".$ON." AS ". $singular ." ON ".$comb_name.".".$singular."_id=".$singular.".id " . $s_res[BEE_RI]["temp_inner_join_sql"];
                 }else{
                     $res[BEE_RI]["temp_inner_join_sql"] .= " INNER JOIN ".$singular." ON ".$comb_name.".".$singular."_id=".$singular.".id " . $s_res[BEE_RI]["temp_inner_join_sql"];

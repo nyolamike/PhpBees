@@ -206,6 +206,12 @@
             print_aspect_kind:{}
         }
 
+    By default, the limit() method starts from the first record in the table. You can use the offset()
+    method to change the starting record. For example, to ignore the first record and return the next three
+    records matching the condition, pass to the offset() method a value of 1.
+    mysql-js> db.country.select(["Code", "Name"]).orderBy(["Name desc"]).limit(3).offset(1)
+    +------+------------+
+
     */
     
 ?>

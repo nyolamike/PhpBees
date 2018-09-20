@@ -44,6 +44,16 @@
                     $sql = $sql . " ORDER BY " . $sqlx . " " . $ob["kind"];
                 }
             }
+            //pagination and limit
+            if(array_key_exists("temp_limit_sql",$segmentation)){
+                $lmt = $segmentation["temp_limit_sql"];
+                if($lmt != null && is_array($lmt)){
+                    $sql = $sql . " LIMIT  " . $lmt["limit"];
+                    if($lmt["offset"] != null){
+                        $sql = $sql . " OFFSET  " . $lmt["offset"];
+                    }
+                }
+            }
             //tools_dump("sql for ",__FILE__,__LINE__,$sql);
             //nyd
             //walk backwards to include code to generate paths to clean
