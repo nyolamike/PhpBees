@@ -55,7 +55,8 @@
             "temp_children" => array(),
             "temp_inner_join_sql" => "",
             "temp_where_sql" => "",
-            "temp_groupby_sql" => ""
+            "temp_groupby_sql" => "",
+            "temp_orderby_sql" => null
         ),array());
 
 
@@ -125,6 +126,7 @@
                 continue;
             }
 
+            //group by
             if($node_key == "_gb" || $node_key == "_g"){
                 $str_temp = "";
                 foreach ($node_key_value as $gbi) { //group by item
@@ -139,6 +141,33 @@
                 $res[BEE_RI]["temp_groupby_sql"] = $str_temp;
                 continue;
             }
+
+
+            //order by
+            if($node_key == "_ob" || $node_key == "_od" || $node_key == "_o" || $node_key == "_d" ||  $node_key == "_ao" ||  $node_key == "_do"
+                || $node_key == "_oba" ||  $node_key == "_obd" ||  $node_key == "_asc" ||  $node_key == "_desc"){
+                $str_temp = "";
+                $kind_temp = "ASC";
+                if($node_key == "_od" || $node_key == "_d" || $node_key == "_do" ||  $node_key == "_obd" ||  $node_key == "_desc"){
+                    $kind_temp = "DESC";
+                }
+                foreach ($node_key_value as $gbi) { //group by item
+                    if(strpos($gbi,".")>0){
+                        $gbis = explode(".",$gbi);
+                        $cnx = Inflect::singularize($gbis[0]); 
+                        $str_temp = $str_temp .  ($cnx.".".$gbis[1]) . ", ";
+                    }else{
+                        $str_temp = $str_temp .  ($comb_name .".".$gbi) . ", ";
+                    }
+                }
+                $res[BEE_RI]["temp_orderby_sql"] = array(
+                    "sql" => $str_temp,
+                    "kind" => $kind_temp
+                ) ;
+                continue;
+            }
+
+
 
 
 

@@ -15,9 +15,9 @@ validations
 multitenancy
 --roles based security (menu items,action items)
 logging/audit trails
-group
-order by/ sorting
-pagination
+--group
+--order by/ sorting
+pagination  and what would have been the returned value count
 realtime sockets 
 email
 sms
@@ -36,7 +36,7 @@ offline access and synchronisation
 --.xtruction
 --sudo delete
 queues
-limits
+limits  and what would have been the returned value count
 --fx calculations
 
 

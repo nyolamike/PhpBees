@@ -36,6 +36,14 @@
                     $sql = $sql . " GROUP BY " . $gb;
                 }
             }
+            //order by
+            if(array_key_exists("temp_orderby_sql",$segmentation)){
+                $ob = $segmentation["temp_orderby_sql"];
+                if($ob != null && is_array($ob)){
+                    $sqlx = trim(trim($ob["sql"]),",");
+                    $sql = $sql . " ORDER BY " . $sqlx . " " . $ob["kind"];
+                }
+            }
             //tools_dump("sql for ",__FILE__,__LINE__,$sql);
             //nyd
             //walk backwards to include code to generate paths to clean
