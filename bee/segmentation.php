@@ -40,7 +40,6 @@
                 "is_child_segmentation_run" => false
             );
             $srp_res = segmentation_run_process($root_node,$config,$connection);
-            //tools_dump("srp_res",__FILE__,__LINE__,$srp_res);
             $res[2] = $srp_res[2];//structure
             $whole_honey[$root_node_name] = $srp_res[BEE_RI];
             $res[BEE_EI] = array_merge($res[BEE_EI],$srp_res[BEE_EI]);
@@ -151,7 +150,6 @@
                     "children" => $res[BEE_RI]["temp_children"],
                     "is_child_segmentation_run" => $is_child_segmentation_run
                 ),$connection);
-                //tools_dump("parent segmentation",__FILE__,__LINE__,$s_res[BEE_RI]);
                 $res[BEE_RI]["temp_sections_sql"] = $res[BEE_RI]["temp_sections_sql"] . " " . $s_res[BEE_RI]["temp_sections_sql"];
                 $res[BEE_EI] = array_merge($res[BEE_EI], $s_res[BEE_EI]);
                 $hive_structure = $s_res[2];
@@ -163,12 +161,12 @@
                 }else{
                     $res[BEE_RI]["temp_inner_join_sql"] .= " INNER JOIN ".$singular." ON ".$comb_name.".".$singular."_id=".$singular.".id " . $s_res[BEE_RI]["temp_inner_join_sql"];
                 }
-                if($singular == "unit"){
-                    //tools_dump("print_aspect_kindfooo",__FILE__,__LINE__,$res[BEE_RI]["temp_inner_join_sql"]);
-                }
-                if($singular == "other_unit"){
-                    //tools_dump("print_aspect_kindfaaaaaa",__FILE__,__LINE__,$res[BEE_RI]["temp_inner_join_sql"]);
-                }
+                // if($singular == "unit"){
+                //     //tools_dump("print_aspect_kindfooo",__FILE__,__LINE__,$res[BEE_RI]["temp_inner_join_sql"]);
+                // }
+                // if($singular == "other_unit"){
+                //     //tools_dump("print_aspect_kindfaaaaaa",__FILE__,__LINE__,$res[BEE_RI]["temp_inner_join_sql"]);
+                // }
                 continue;
             }
 
@@ -200,7 +198,6 @@
             //if we have reached this far our query is wrong here
             //we can raise an error
             array_push($res[BEE_EI],"Invalid path: " . $path.BEE_SEP.$node_key);
-
         }
 
         //tools_dumpx("detect",__FILE__,__LINE__,$node,"unit");
@@ -310,8 +307,7 @@
                 if(tools_startsWith($section_name,"_fx_")){
                     $fx_node = $parent_node[$section_name];
                     $bsfr_res = bee_sqllization_fx_run($fx_node,$comb_name,$hive_structure);
-                    //tools_dumpx("bsfr_res",__FILE__,__LINE__,$bsfr_res);
-                    $errors = array_merge($errors,$bsfr_res[BEE_RI]);
+                    $errors = array_merge($errors,$bsfr_res[BEE_EI]);
                     $sectfx = substr($section_name,strlen("_fx_"));
                     $temp_path_to = $path . BEE_SEP . $sectfx;
                     $subsql = $bsfr_res[BEE_RI] . " as " . $temp_path_to;
@@ -343,6 +339,7 @@
                 $sql = $sql . " " . $comb_name . "." . $section_name . " as ". $temp_path_to .",";
             }
         }
+
         return array($sql,$errors,$hive_structure);
     }
 

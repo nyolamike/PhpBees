@@ -280,7 +280,6 @@
         
         //tools_dump("@0 == ",__FILE__,__LINE__,$nectoroid);
         $sr_res = segmentation_run($nectoroid,$structure,$connection);
-        //tools_dump("@1 segmentation_run res: ",__FILE__,__LINE__,$sr_res[BEE_RI]);
         $hasr_res = hive_after_segmentation_run($sr_res,$nectoroid,$structure,$connection);
         $res[BEE_RI] = $hasr_res[BEE_RI];
         $res[BEE_EI] = array_merge($res[BEE_EI],$hasr_res[BEE_EI]);
@@ -448,9 +447,9 @@
                         if(count($res[BEE_EI])==0){//no errors
                             //tools_dumpx("querydata",__FILE__,__LINE__,$querydata);
                             $brp_res = bee_run_get($querydata,$bee["BEE_HIVE_STRUCTURE"]["combs"],$bee["BEE_HIVE_CONNECTION"]);
-                            //tools_dump("brp_res get ",__FILE__,__LINE__,$res[BEE_EI]);
+                            //tools_dump("@a tracing null errors",__FILE__,__LINE__,$brp_res[BEE_EI]);
                             $res[BEE_EI] = array_merge($res[BEE_EI],$brp_res[BEE_EI]);
-                            //tools_dump("brp_res gets ",__FILE__,__LINE__,$res[BEE_EI]);
+                            //tools_dump("tracing null errors ",__FILE__,__LINE__,$res[BEE_EI]);
                             $res[BEE_RI] = $brp_res[BEE_RI];
                         }
                     }  
