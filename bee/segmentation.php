@@ -669,6 +669,12 @@
                     $value = time();
                     $handled = true;
                 }
+                //encrypt
+                if(tools_startsWith($section_name,"_encrypt_")){
+                    $section_name = str_replace("_encrypt_","",$section_name);
+                    $value = password_hash($value, PASSWORD_DEFAULT);
+                    $handled = true;
+                }
                 //_fk_
                 if(tools_startsWith($section_name,"_fk_")){
                 

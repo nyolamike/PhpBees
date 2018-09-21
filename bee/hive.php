@@ -820,6 +820,12 @@ function bee_hive_run_login($post_nectoroid,$bee){
                     "AND",
                     array("status","=","active")
                 )
+            ),
+            "user_roles" => array(
+                "role" => array(
+                    "role_permisiion" => array(),
+                    "role_module" => array()
+                )
             )
         )
     );
@@ -866,7 +872,8 @@ function bee_hive_run_login($post_nectoroid,$bee){
 
                 $res[BEE_RI] = array(
                     "_f_login" => array(
-                        "token" => $serializedToken
+                        "token" => $serializedToken,
+                        "user" => $foundUser
                     )
                 );
             }
