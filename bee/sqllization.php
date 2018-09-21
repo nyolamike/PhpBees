@@ -54,6 +54,7 @@
                     }
                 }
             }
+            
             //tools_dump("sql for ",__FILE__,__LINE__,$sql);
             //nyd
             //walk backwards to include code to generate paths to clean
@@ -64,7 +65,8 @@
             array_push($sqls,array(
                 "sql" => $sql,
                 "paths_to_clean" => $segmentation["paths_to_clean"],
-                "children" => $segmentation["temp_children"]
+                "children" => $segmentation["temp_children"],
+                "hash" => $segmentation["temp_hash"]
             ));
         }
         return  array($sqls,array());

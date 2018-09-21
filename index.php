@@ -212,6 +212,9 @@
     mysql-js> db.country.select(["Code", "Name"]).orderBy(["Name desc"]).limit(3).offset(1)
     +------+------------+
 
+    //juicy joan idea
+    //bakuwekyonya
+    //how could i let you leave me, now its too late to, i need you back but you are gone
     */
     
 ?>

@@ -13,7 +13,8 @@
             array_push($res[BEE_RI],array(
                 "raw_honey" => $hr_res[BEE_RI]["data"],
                 "paths_to_clean" =>  $sql_group["paths_to_clean"],
-                "children" => $sql_group["children"]
+                "children" => $sql_group["children"],
+                "hash" => $sql_group["hash"]
             ));
         }
         return $res;

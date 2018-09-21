@@ -57,7 +57,8 @@
             "temp_where_sql" => "",
             "temp_groupby_sql" => "",
             "temp_orderby_sql" => null,
-            "temp_limit_sql" => null
+            "temp_limit_sql" => null,
+            "temp_hash" => null
         ),array());
 
 
@@ -188,6 +189,15 @@
                 continue;
             }
 
+
+            //_hash:"num"
+            if($node_key == "_hash"){
+                //tools_dumpx("_hash",__FILE__,__LINE__,array($node_key_value,$path));
+                $tx_name = trim($node_key_value);
+                $has_name = strlen($tx_name)>0?$tx_name:"hash";
+                $res[BEE_RI]["temp_hash"] = $path . BEE_SEP . $has_name;
+                continue;
+            }
 
 
 

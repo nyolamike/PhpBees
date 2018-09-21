@@ -11,7 +11,14 @@
             //raw_honey, paths_to_clean, children
             $raw_honey = $raw_honey_group["raw_honey"];
             //tools_dump("raw_honey_index ",__FILE__,__LINE__,$raw_honey_index );
-
+            $is_hashed = false;
+            $has_name = "";
+            $hash = 1;
+            if(is_string($raw_honey_group["hash"])){
+                //tools_dumpx("#hash: ",__FILE__,__LINE__,$raw_honey_group["hash"]);
+                $is_hashed = true;
+                $has_name = $raw_honey_group["hash"];
+            }
             //edge case of no results returned as in empty results
             if(count($raw_honey) == 0){
                 //every index indicates a root node in the nectoroid
@@ -39,6 +46,12 @@
             foreach ($raw_honey as $row_index => $row_value) {
                 $next_index = true;
                 //tools_dump("row value",__FILE__,__LINE__,$row_value);
+                if($is_hashed){
+                    //inject in a hash
+                    $row_value[$has_name] = $hash;
+                    $hash = $hash + 1;
+                    //tools_dump("row value",__FILE__,__LINE__,$row_value);
+                }
                 foreach ($row_value as $path_to => $path_value) {
                     if(preg_match('/^\d+$/', $path_to)){
                         continue;

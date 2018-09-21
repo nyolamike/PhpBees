@@ -823,8 +823,8 @@ function bee_hive_run_login($post_nectoroid,$bee){
             ),
             "user_roles" => array(
                 "role" => array(
-                    "role_permisiion" => array(),
-                    "role_module" => array()
+                    "role_permisiions" => array(),
+                    "role_modules" => array()
                 )
             )
         )
