@@ -5,6 +5,7 @@
     function  packaging_run($raw_honeys,$nectoroid,$structure,$connection){
         //tools_dump("testing honey",__FILE__,__LINE__,$raw_honeys);
         $res = array(array(),array(),$structure);
+        $has_hidden = array_key_exists("_hidden",$structure);
         $honey = array();
         foreach ($raw_honeys as $raw_honey_index => $raw_honey_group) {
             //the raw_honey_group contains
@@ -15,6 +16,7 @@
             $has_name = "";
             $hash = 1;
             if(is_string($raw_honey_group["hash"])){
+                //tools_dumpx("structure",__FILE__,__LINE__,$structure);
                 //tools_dumpx("#hash: ",__FILE__,__LINE__,$raw_honey_group["hash"]);
                 $is_hashed = true;
                 $has_name = $raw_honey_group["hash"];
@@ -63,6 +65,18 @@
                         $honey_ref = &$honey;
                         for ($i=0; $i < count($path_parts); $i++) { 
                             $path_part = $path_parts[$i];
+                            //hidden fields
+                            if($i+2 == count($path_parts)){
+                                $hk = $path_parts[$i] . BEE_SEP . $path_parts[$i+1]; 
+                                if($has_hidden){
+                                    //tools_dump("_hiddenx",__FILE__,__LINE__,$hk);
+                                    if(in_array($hk,$structure["_hidden"])){
+                                        //this is a hidden field, so we just kafk it a smart wire
+                                        $i = count($path_parts) + 1;
+                                        continue;
+                                    }
+                                }
+                            }
                             //detect if its the last part which indicates value
                             if($i+1 == count($path_parts)){
                                 //nyd
@@ -103,6 +117,8 @@
                                         $next_index = false;
                                     }else{
                                         //get the reference to the last element of the array
+                                        //tools_dump("@ff",__FILE__,__LINE__,$honey_ref);
+                                       //tools_dump("@ff3",__FILE__,__LINE__,$path_part);
                                         $honey_ref = &$honey_ref[$path_part][count($honey_ref[$path_part])-1];
                                     }
                                 }

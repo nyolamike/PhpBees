@@ -831,6 +831,9 @@
     function bee_segmentation_delete_child_sqls($csqls,$pids,$comb_name,$structure,$connection,$user_id){
         $res = array(null,array(),$structure);
         foreach ($structure as $section_name => $section_def) {
+            if(tools_startsWith($section_name,"_")){
+                continue;
+            }
             $parent_key = $comb_name . "_id";
             $parent_key2 = "other_" .$comb_name . "_id";
             if(array_key_exists($parent_key,$section_def) || array_key_exists($parent_key2,$section_def)){

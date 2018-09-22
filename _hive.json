@@ -325,7 +325,11 @@
             "section_id":["tn"],
             "affected_record_guid":["tn"],
             "description":["tn"]
-        }
+        },
+        "_hidden":[
+            "users__password",
+            "user__password"
+        ]
     },
     "seeds":{
         "payment_types":[{"name":"cash","description":"payment by cash"}],

@@ -12,6 +12,9 @@
             "permissions" => array()
         );
         foreach ($combs as $combs_name => $combs_def) {
+            if(tools_startsWith($comb_name,"_")){
+                continue;
+            }
             $plural_name = Inflect::pluralize($combs_name);
             $perm = array(
                 "name" => $combs_name,

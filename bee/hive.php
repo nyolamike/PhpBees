@@ -341,7 +341,7 @@ function hive_run_get_garden($structure,$connection){
 function hive_after_segmentation_run($segmentation_run_res,$nectoroid,$structure,$connection){
     $res = array(null,array(),$structure);
     $sr_res = $segmentation_run_res;
-    //tools_dump("hive segmentation results",__FILE__,__LINE__,$sr_res[BEE_RI]);
+    //tools_dumpx("hive segmentation results",__FILE__,__LINE__,$sr_res[BEE_RI]);
     $res[BEE_EI] = array_merge($res[BEE_EI],$sr_res[BEE_EI]);
     $res[2] = $sr_res[2];//the structure
     if(count($sr_res[BEE_EI]) == 0){//when we dont have any errors
@@ -354,7 +354,7 @@ function hive_after_segmentation_run($segmentation_run_res,$nectoroid,$structure
             //tools_dump("xtu removed",__FILE__,__LINE__,$sr_res[BEE_RI]);
         }
         $sr_res = sqllization_run($sr_res[BEE_RI]);
-        //tools_dump("@2 sqllization_run res: ",__FILE__,__LINE__,$sr_res[BEE_RI]);
+        //tools_dumpx("@2 sqllization_run res: ",__FILE__,__LINE__,$sr_res[BEE_RI]);
         //convert these queries into raw honey
         $pr_res = production_run($sr_res[BEE_RI],$connection);
         //tools_dump("@3 production_run res: ",__FILE__,__LINE__,$pr_res);
@@ -688,6 +688,9 @@ function hive_run_register_hive($post_nectoroid,$bee){
         //the super role has access to all system permissions
         $combs = $bee["BEE_HIVE_STRUCTURE"]["combs"];
         foreach ($combs as $combs_name => $combs_def) {
+            if(tools_startsWith($comb_name,"_")){
+                continue;
+            }
             $role_permisiion = array(
                 "_fk_role_id" => "role",
                 "permission" => $combs_name,
