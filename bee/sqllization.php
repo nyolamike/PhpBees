@@ -32,7 +32,7 @@
             if(array_key_exists("temp_having_sql",$segmentation)){
                 $hvsql = $segmentation["temp_having_sql"];
                 if(strlen($hvsql)>0){
-                    $sql = $sql . " HAVING  " . $hvsql;
+                    $sql = $sql . " HAVING  " . $hvsql  . " ";
                 }
             }
             //groub by
