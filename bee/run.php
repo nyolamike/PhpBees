@@ -65,7 +65,9 @@
     define(BEE_GARDEN_STUCTURE_FILE_NAME,"bee/_garden.json");
     define(BEE_HIVE_STUCTURE_FILE_NAME,"_hive.json");
     define(BEE_DEFAULT_PASSWORD,"qwerty");
-    
+    $BEE_GLOBALS = array(
+        "is_login_call" => false
+    );
     $BEE_ERRORS = array();
 
     //get the hive of the application
@@ -346,6 +348,7 @@
     //get the children_tree from the hive structure
 
     function bee_handle_requests($bee){
+        global $BEE_GLOBALS;
         $res = array(null,array(),null);
         $res[BEE_EI] = array_merge($bee["BEE_ERRORS"],$res[BEE_EI]);
         $method = "get";
@@ -479,7 +482,9 @@
                         $login_nector = array(
                             "_f_login" => $postdata["_f_login"]
                         );
+                        $BEE_GLOBALS["is_login_call"] = true;
                         $hrl_res = bee_hive_run_login($login_nector, $bee);
+                        $BEE_GLOBALS["is_login_call"] = false;
                         $whole_honey["_f_login"] = $hrl_res[BEE_RI];
                         $res[BEE_RI] = $whole_honey["_f_login"];
                         $res[BEE_EI] = array_merge($res[BEE_EI],$hrl_res[BEE_EI]); 

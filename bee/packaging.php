@@ -3,6 +3,7 @@
     //the path to the value really means that there is an object that must hold this value
     //
     function  packaging_run($raw_honeys,$nectoroid,$structure,$connection){
+        global $BEE_GLOBALS;
         //tools_dump("testing honey",__FILE__,__LINE__,$raw_honeys);
         $res = array(array(),array(),$structure);
         $has_hidden = array_key_exists("_hidden",$structure);
@@ -68,12 +69,18 @@
                             //hidden fields
                             if($i+2 == count($path_parts)){
                                 $hk = $path_parts[$i] . BEE_SEP . $path_parts[$i+1]; 
-                                if($has_hidden){
-                                    //tools_dump("_hiddenx",__FILE__,__LINE__,$hk);
-                                    if(in_array($hk,$structure["_hidden"])){
-                                        //this is a hidden field, so we just kafk it a smart wire
-                                        $i = count($path_parts) + 1;
-                                        continue;
+                                //skip password for login senarios
+                                if($BEE_GLOBALS["is_login_call"] == true && $path_parts[$i+1] == "password"){
+                                    //do nothing about it for now
+                                    //because we need this value laiter on
+                                }else{
+                                    if($has_hidden){
+                                        //tools_dump("_hiddenx",__FILE__,__LINE__,$hk);
+                                        if(in_array($hk,$structure["_hidden"])){
+                                            //this is a hidden field, so we just kafk it a smart wire
+                                            $i = count($path_parts) + 1;
+                                            continue;
+                                        }
                                     }
                                 }
                             }

@@ -688,7 +688,7 @@ function hive_run_register_hive($post_nectoroid,$bee){
         //the super role has access to all system permissions
         $combs = $bee["BEE_HIVE_STRUCTURE"]["combs"];
         foreach ($combs as $combs_name => $combs_def) {
-            if(tools_startsWith($comb_name,"_")){
+            if(tools_startsWith($combs_name,"_")){
                 continue;
             }
             $role_permisiion = array(

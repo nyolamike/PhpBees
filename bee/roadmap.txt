@@ -8,7 +8,7 @@ if($is_restricted==true && BEE_ENFORCE_RELATIONSHIPS == false){
 for inserting and updating records
 
 --updating
-invisible fields/ hidden fields
+--invisible fields/ hidden fields
 --attributes list
 --seeding
 validations
@@ -17,6 +17,8 @@ multitenancy
 logging/audit trails
 --group
 --order by/ sorting
+--hashing
+--encryption
 pagination  and what would have been the returned value count
 realtime sockets 
 email
