@@ -37,6 +37,7 @@ conditions
 offline access and synchronisation
 --.xtruction
 --sudo delete
+--having
 queues
 limits  and what would have been the returned value count
 --fx calculations

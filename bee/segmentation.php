@@ -58,7 +58,8 @@
             "temp_groupby_sql" => "",
             "temp_orderby_sql" => null,
             "temp_limit_sql" => null,
-            "temp_hash" => null
+            "temp_hash" => null,
+            "temp_having_sql" => ""
         ),array());
 
 
@@ -127,6 +128,19 @@
                 }
                 continue;
             }
+
+            //having
+            if($node_key == "_h"){
+                $srw_res = segmentation_run_w($node_key_value,$node_name,$node,$hive_structure);
+                $res[BEE_RI]["temp_having_sql"] = $srw_res[BEE_RI];
+                $res[BEE_EI] = array_merge($res[BEE_EI], $srw_res[BEE_EI]);
+                $hive_structure = $srw_res[2];
+                if(count($srw_res[BEE_EI])>0){ //dont continue if we have errors with _h processing
+                    return $res;
+                }
+                continue;
+            }
+            
 
             //group by
             if($node_key == "_gb" || $node_key == "_g"){
@@ -198,6 +212,8 @@
                 $res[BEE_RI]["temp_hash"] = $path . BEE_SEP . $has_name;
                 continue;
             }
+
+
 
 
 
@@ -432,6 +448,14 @@
     }
     
     //process a where entry
+    function seg_fx($comb_name,$left){
+        if(stripos($left,"_fx_")){
+            $left = "" . $comb_name . BEE_SEP . str_replace("_fx_","",$left);
+        }else{
+            $left = "" . $comb_name . "." . $left;
+        }
+        return $left;
+    }
     function segmentation_run_where_entry($where_entry,$comb_name){
         $left = $where_entry[0];
         $condition = trim($where_entry[1]);
@@ -439,7 +463,7 @@
         $sql = "";
         if($condition == "="){
             //left side =  right side
-            $val_left = (is_array($left))? segmentation_run_where_entry($left,$comb_name) : ("" . $comb_name . "." . $left);
+            $val_left = (is_array($left))? segmentation_run_where_entry($left,$comb_name) : (seg_fx($comb_name,$left));
             $val_right = (is_array($right))? segmentation_run_where_entry($right,$comb_name) : $right;
             if(!is_numeric($val_right)){
                 $val_right = "'".$val_right."'";
@@ -447,7 +471,7 @@
             $sql = $sql . " " . $val_left . " = " . $val_right;
         }elseif($condition == ">=" || $condition == "gte" ||   $condition == "GTE" ){
             //left side =  right side
-            $val_left = (is_array($left))? segmentation_run_where_entry($left,$comb_name) : ("" . $comb_name . "." . $left);
+            $val_left = (is_array($left))? segmentation_run_where_entry($left,$comb_name) : (seg_fx($comb_name,$left));
             $val_right = (is_array($right))? segmentation_run_where_entry($right,$comb_name) : $right;
             if(!is_numeric($val_right)){
                 $val_right = "'".$val_right."'";
@@ -455,7 +479,7 @@
             $sql = $sql . " " . $val_left . " >= " . $val_right;
         }elseif($condition == "<=" || $condition == "lte" ||   $condition == "LTE" ){
             //left side =  right side
-            $val_left = (is_array($left))? segmentation_run_where_entry($left,$comb_name) : ("" . $comb_name . "." . $left);
+            $val_left = (is_array($left))? segmentation_run_where_entry($left,$comb_name) : (seg_fx($comb_name,$left));
             $val_right = (is_array($right))? segmentation_run_where_entry($right,$comb_name) : $right;
             if(!is_numeric($val_right)){
                 $val_right = "'".$val_right."'";
@@ -463,7 +487,7 @@
             $sql = $sql . " " . $val_left . " <= " . $val_right;
         }elseif($condition == "!=" || $condition == "ne" ||   $condition == "NE" ){
             //left side =  right side
-            $val_left = (is_array($left))? segmentation_run_where_entry($left,$comb_name) : ("" . $comb_name . "." . $left);
+            $val_left = (is_array($left))? segmentation_run_where_entry($left,$comb_name) : (seg_fx($comb_name,$left));
             $val_right = (is_array($right))? segmentation_run_where_entry($right,$comb_name) : $right;
             if(!is_numeric($val_right)){
                 $val_right = "'".$val_right."'";
@@ -471,7 +495,7 @@
             $sql = $sql . " " . $val_left . " != " . $val_right;
         }elseif($condition == ">" || $condition == "gt" ||   $condition == "GT" ){
             //left side =  right side
-            $val_left = (is_array($left))? segmentation_run_where_entry($left,$comb_name) : ("" . $comb_name . "." . $left);
+            $val_left = (is_array($left))? segmentation_run_where_entry($left,$comb_name) : (seg_fx($comb_name,$left));
             $val_right = (is_array($right))? segmentation_run_where_entry($right,$comb_name) : $right;
             if(!is_numeric($val_right)){
                 $val_right = "'".$val_right."'";
@@ -479,7 +503,7 @@
             $sql = $sql . " " . $val_left . " > " . $val_right;
         }elseif($condition == "<" || $condition == "lt" ||   $condition == "LT" ){
             //left side =  right side
-            $val_left = (is_array($left))? segmentation_run_where_entry($left,$comb_name) : ("" . $comb_name . "." . $left);
+            $val_left = (is_array($left))? segmentation_run_where_entry($left,$comb_name) : (seg_fx($comb_name,$left));
             $val_right = (is_array($right))? segmentation_run_where_entry($right,$comb_name) : $right;
             if(!is_numeric($val_right)){
                 $val_right = "'".$val_right."'";
@@ -487,17 +511,17 @@
             $sql = $sql . " " . $val_left . " < " . $val_right;
         }elseif($condition == "LIKE" || $condition == "like" || $condition == "lk" || $condition == "~" ){
             //left side =  right side
-            $val_left = (is_array($left))? segmentation_run_where_entry($left,$comb_name) : ("" . $comb_name . "." . $left);
+            $val_left = (is_array($left))? segmentation_run_where_entry($left,$comb_name) : (seg_fx($comb_name,$left));
             $val_right = (is_array($right))? segmentation_run_where_entry($right,$comb_name) : $right;
             $sql = $sql . " " . $val_left . " LIKE '%" . $val_right . "%' ";
         }elseif($condition == "OR" || $condition == "or" || $condition == "|" || $condition == "||"){
             //left side =  right side
-            $val_left = (is_array($left))? segmentation_run_where_entry($left,$comb_name) : ("" . $comb_name . "." . $left);
+            $val_left = (is_array($left))? segmentation_run_where_entry($left,$comb_name) : (seg_fx($comb_name,$left));
             $val_right = (is_array($right))? segmentation_run_where_entry($right,$comb_name) :  $right;
             $sql = $sql . " (" . $val_left . ") OR (" . $val_right . ")";
         }elseif($condition == "AND" || $condition == "and" || $condition == "&" || $condition == "&&"){
             //left side =  right side
-            $val_left = (is_array($left))? segmentation_run_where_entry($left,$comb_name) : ("" . $comb_name . "." . $left);
+            $val_left = (is_array($left))? segmentation_run_where_entry($left,$comb_name) : (seg_fx($comb_name,$left));
             $val_right = (is_array($right))? segmentation_run_where_entry($right,$comb_name) :  $right;
             $sql = $sql . " (" . $val_left . ") AND (" . $val_right . ")";
         }
