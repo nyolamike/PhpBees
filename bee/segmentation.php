@@ -12,9 +12,11 @@
         foreach ($nectoroid as $root_node_name => $root_node) {
             //tools_dump("@: ",__FILE__,__LINE__,$root_node_name);
             if(tools_startsWith($root_node_name,"_")){
+                
+
                 //extractions
                 if(tools_startsWith($root_node_name,"_xtu_")){
-                    if(!array_key_exists("xtu")){
+                    if(!array_key_exists("xtu",$whole_honey)){
                         $whole_honey["xtu"] = array();
                     }
                     $nn = str_replace("_xtu_","",$root_node_name);
@@ -403,6 +405,42 @@
                     $sectfx = substr($section_name,strlen("_fx_"));
                     $temp_path_to = $path . BEE_SEP . $sectfx;
                     $subsql = $bsfr_res[BEE_RI] . " as " . $temp_path_to;
+                    $do_this_instead = $subsql;
+                    $fall_through = true;
+                }
+
+                //count
+                if(tools_startsWith($section_name,"_count") || tools_startsWith($section_name,"_cnt") ){
+                    //e.g
+                    //_count _count_ _count_name _count_* _countu_name 
+                    $sectfx = "";
+                    $d = false;
+                    $asx = "";
+                    if(tools_startsWith($section_name,"_count")){ $sectfx = str_replace("_count","",$section_name); }
+                    if(tools_startsWith($section_name,"_cnt")){ $sectfx = str_replace("_cnt","",$section_name); }
+                    if(tools_startsWith($section_name,"_count_")){ $sectfx = str_replace("_count_","",$section_name); }
+                    if(tools_startsWith($section_name,"_cnt_")){ $sectfx = str_replace("_cnt_","",$section_name); }
+                    if(tools_startsWith($section_name,"_countu")){ $sectfx = str_replace("_countu","",$section_name); $d = true; }
+                    if(tools_startsWith($section_name,"_cntu")){ $sectfx = str_replace("_cntu","",$section_name); $d = true;}
+                    if(tools_startsWith($section_name,"_countu_")){ $sectfx = str_replace("_countu_","",$section_name); $d = true;}
+                    if(tools_startsWith($section_name,"_cntu_")){ $sectfx = str_replace("_cntu_","",$section_name); $d = true;}
+                    if(tools_startsWith($section_name,"_countd")){ $sectfx = str_replace("_countd","",$section_name); $d = true; }
+                    if(tools_startsWith($section_name,"_cntd")){ $sectfx = str_replace("_cntd","",$section_name); $d = true;}
+                    if(tools_startsWith($section_name,"_countd_")){ $sectfx = str_replace("_countd_","",$section_name); $d = true;}
+                    if(tools_startsWith($section_name,"_cntd_")){ $sectfx = str_replace("_cntd_","",$section_name); $d = true;}
+                    $sectfx = trim($sectfx);
+                    if(strlen($sectfx) == 0){
+                        $sectfx = "*";
+                        $asx = "count";
+                    }elseif($sectfx == "*"){
+                        $asx = "count";
+                    }else{
+                        $asx = "count_" . $sectfx;
+                        $sectfx = $comb_name . "." . $sectfx;
+                    }
+                    $d = ($d == true)?"DISTINCT ":"";
+                    $temp_path_to = $path . BEE_SEP . $asx;
+                    $subsql = " COUNT(". $d . $sectfx . ") as ". $temp_path_to;
                     $do_this_instead = $subsql;
                     $fall_through = true;
                 }
