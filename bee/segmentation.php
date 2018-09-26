@@ -100,6 +100,30 @@
                 continue;
             }
 
+            
+
+            if(tools_startsWith($node_key,"_n")){
+                //grouped staff here
+                /*
+                    product:{
+                        _n1:{
+                            _a:"_count"
+                        },
+                        _n2:{
+                            _a:"_count",
+                            _w:[["id",">",2]]
+                        }
+                    }
+                */
+                //here each _n is a nectoroid
+                foreach ($node_key_value as $nkey => $nvalue) {
+                    tools_dumpx("nvalue",__FILE__,__LINE__,array($nvalue));
+                    $srp_res = segmentation_run_process($nvalue,$config,$connection);
+                    tools_dumpx("srp_res",__FILE__,__LINE__,array($srp_res));
+                }
+                continue;
+            }
+
             //echo $node_name . " <br/>";
             if($node_key == BEE_ANN){
                 //string * means get everything
@@ -499,6 +523,8 @@
             //tools_dump("seg_fxr ",__FILE__,__LINE__,stripos($right,"_fx_"));
             $right = "" . $node_name . BEE_SEP . str_replace("_fx_","",$right);
         }
+        //$right = "_fxx_";
+        //tools_dumpx("seg_fxr ",__FILE__,__LINE__,is_int(stripos($right,"_fx_")));
         return $right;
     }
     function segmentation_run_where_entry($where_entry,$comb_name,$node_name){
@@ -510,7 +536,7 @@
             //left side =  right side
             $val_left = (is_array($left))? segmentation_run_where_entry($left,$comb_name,$node_name) : (seg_fx($comb_name,$left,$node_name));
             $val_right = (is_array($right))? segmentation_run_where_entry($right,$comb_name,$node_name) : seg_fxr($comb_name,$right,$node_name);
-            if(!is_numeric($val_right) && stripos($right,"_fx_") < 0){
+            if(!is_numeric($val_right) && !is_int(stripos($right,"_fx_"))){
                 $val_right = "'".$val_right."'";
             }elseif(stripos($left,"_fx_") > -1){
                 //having
@@ -521,7 +547,7 @@
             //left side =  right side
             $val_left = (is_array($left))? segmentation_run_where_entry($left,$comb_name,$node_name) : (seg_fx($comb_name,$left,$node_name));
             $val_right = (is_array($right))? segmentation_run_where_entry($right,$comb_name,$node_name) : seg_fxr($comb_name,$right,$node_name);
-            if(!is_numeric($val_right) && stripos($right,"_fx_") < 0){
+            if(!is_numeric($val_right) && !is_int(stripos($right,"_fx_"))){
                 $val_right = "'".$val_right."'";
             }elseif(stripos($left,"_fx_") > -1){
                 //having
@@ -532,7 +558,7 @@
             //left side =  right side
             $val_left = (is_array($left))? segmentation_run_where_entry($left,$comb_name,$node_name) : (seg_fx($comb_name,$left,$node_name));
             $val_right = (is_array($right))? segmentation_run_where_entry($right,$comb_name,$node_name) : seg_fxr($comb_name,$right,$node_name);
-            if(!is_numeric($val_right) && stripos($right,"_fx_") < 0){
+            if(!is_numeric($val_right) && !is_int(stripos($right,"_fx_"))){
                 $val_right = "'".$val_right."'";
             }elseif(stripos($left,"_fx_") > -1){
                 //having
@@ -543,7 +569,7 @@
             //left side =  right side
             $val_left = (is_array($left))? segmentation_run_where_entry($left,$comb_name,$node_name) : (seg_fx($comb_name,$left,$node_name));
             $val_right = (is_array($right))? segmentation_run_where_entry($right,$comb_name,$node_name) : seg_fxr($comb_name,$right,$node_name);
-            if(!is_numeric($val_right) && stripos($right,"_fx_") < 0){
+            if(!is_numeric($val_right) && !is_int(stripos($right,"_fx_"))){
                 $val_right = "'".$val_right."'";
             }elseif(stripos($left,"_fx_") > -1){
                 //having
@@ -554,7 +580,7 @@
             //left side =  right side
             $val_left = (is_array($left))? segmentation_run_where_entry($left,$comb_name,$node_name) : (seg_fx($comb_name,$left,$node_name));
             $val_right = (is_array($right))? segmentation_run_where_entry($right,$comb_name,$node_name) : seg_fxr($comb_name,$right,$node_name);
-            if(!is_numeric($val_right) && stripos($right,"_fx_") < 0){
+            if(!is_numeric($val_right) && !is_int(stripos($right,"_fx_"))){
                 $val_right = "'".$val_right."'";
             }elseif(stripos($left,"_fx_") > -1){
                 //having
@@ -565,7 +591,7 @@
             //left side =  right side
             $val_left = (is_array($left))? segmentation_run_where_entry($left,$comb_name,$node_name) : (seg_fx($comb_name,$left,$node_name));
             $val_right = (is_array($right))? segmentation_run_where_entry($right,$comb_name,$node_name) : seg_fxr($comb_name,$right,$node_name);
-            if(!is_numeric($val_right) && stripos($right,"_fx_") < 0){
+            if(!is_numeric($val_right) && !is_int(stripos($right,"_fx_"))){
                 $val_right = "'".$val_right."'";
             }elseif(stripos($left,"_fx_") > -1){
                 //having
