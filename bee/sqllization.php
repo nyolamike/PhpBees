@@ -3,14 +3,40 @@
     //construct an sql query from these segements
     function sqllization_run($sql_segments){
         $sqls = array();
+        
         foreach ($sql_segments as $root_node_name => $segmentation) {
             if($segmentation == "_at"){//extractionstaff
                 continue;
             }
-            // if(!isset($segmentation["temp_sections_sql"])){
-            //     tools_dump("root_node_name",__FILE__,__LINE__,$root_node_name);
-            //     tools_dump("segmentation",__FILE__,__LINE__,$segmentation);
-            // }
+           
+            //check if we have an _nx situation
+            if(array_key_exists("temp_n",$segmentation) && count($segmentation["temp_n"]) > 0){
+                //tools_dumpx("sqllization_run temp_n",__FILE__,__LINE__,$segmentation["temp_n"]);
+                
+                //nyd
+                //walk backwards to include code to generate paths to clean
+                //and delete this if below
+                if(!isset($segmentation["paths_to_clean"])){
+                    $segmentation["paths_to_clean"] = array();
+                }
+                $nres = array(
+                    "sql" => "",
+                    "paths_to_clean" => $segmentation["paths_to_clean"],
+                    "children" => $segmentation["temp_children"],
+                    "hash" => $segmentation["temp_hash"],
+                    "_n" => array()
+                );
+                $nx = $segmentation["temp_n"];
+                foreach ($nx as $nkey => $segmentation_n) {
+                    $srobject = array();
+                    $srobject[$root_node_name] = $segmentation_n;
+                    $sr_res = sqllization_run($srobject);
+                    //tools_dumpx("sqllization_run sr_res",__FILE__,__LINE__,$sr_res);
+                    $nres["_n"][$nkey] = $sr_res[BEE_RI];
+                }
+                array_push($sqls,$nres);
+                continue;
+            }
 
             $comb_name = Inflect::singularize($root_node_name);
             $sections_sql = rtrim(trim($segmentation["temp_sections_sql"]), ',');
@@ -73,7 +99,8 @@
                 "sql" => $sql,
                 "paths_to_clean" => $segmentation["paths_to_clean"],
                 "children" => $segmentation["temp_children"],
-                "hash" => $segmentation["temp_hash"]
+                "hash" => $segmentation["temp_hash"],
+                "_n" => array()
             ));
         }
         return  array($sqls,array());

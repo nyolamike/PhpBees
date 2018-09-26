@@ -61,7 +61,8 @@
             "temp_orderby_sql" => null,
             "temp_limit_sql" => null,
             "temp_hash" => null,
-            "temp_having_sql" => ""
+            "temp_having_sql" => "",
+            "temp_n" => array()
         ),array());
 
 
@@ -115,12 +116,11 @@
                         }
                     }
                 */
-                //here each _n is a nectoroid
-                foreach ($node_key_value as $nkey => $nvalue) {
-                    tools_dumpx("nvalue",__FILE__,__LINE__,array($nvalue));
-                    $srp_res = segmentation_run_process($nvalue,$config,$connection);
-                    tools_dumpx("srp_res",__FILE__,__LINE__,array($srp_res));
-                }
+                $srp_resn = segmentation_run_process($node_key_value,$config,$connection);
+                //tools_dumpx("srp_res",__FILE__,__LINE__,$srp_resn[BEE_RI]);
+                $res[BEE_EI] = array_merge($res[BEE_EI], $srp_resn[BEE_EI]);
+                $hive_structure = $srp_resn[2];
+                $res[BEE_RI]["temp_n"][$node_key] = $srp_resn[BEE_RI];
                 continue;
             }
 

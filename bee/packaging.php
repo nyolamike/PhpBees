@@ -8,155 +8,178 @@
         $res = array(array(),array(),$structure);
         $has_hidden = array_key_exists("_hidden",$structure);
         $honey = array();
-        foreach ($raw_honeys as $raw_honey_index => $raw_honey_group) {
-            //the raw_honey_group contains
-            //raw_honey, paths_to_clean, children
-            $raw_honey = $raw_honey_group["raw_honey"];
-            //tools_dump("raw_honey_index ",__FILE__,__LINE__,$raw_honey_index );
-            $is_hashed = false;
-            $has_name = "";
-            $hash = 1;
-            if(is_string($raw_honey_group["hash"])){
-                //tools_dumpx("structure",__FILE__,__LINE__,$structure);
-                //tools_dumpx("#hash: ",__FILE__,__LINE__,$raw_honey_group["hash"]);
-                $is_hashed = true;
-                $has_name = $raw_honey_group["hash"];
-            }
-            //edge case of no results returned as in empty results
-            if(count($raw_honey) == 0){
-                //every index indicates a root node in the nectoroid
-                $ti = 0; //target index
-                foreach ($nectoroid as $rti => $rtv) {//root node index, root node value
-                    if(tools_startsWith($rti, "_")){
-                        continue;
-                    }
-                    if($ti == $raw_honey_index){
-                        $cn  = Inflect::singularize($rti);
-                        if($cn == $rti){
-                            //an object was supposed to be here so we get null
-                            $honey[$rti] = null;
-                        }else{
-                            //an empty array of results
-                            $honey[$rti] = array();
-                        }
-                        //we dont need to mind bout children at this point
-                        break; //we got what we come for here
-                    }
-                    $ti = $ti + 1; //continue the search
-                }
-                continue;
-            }
-            foreach ($raw_honey as $row_index => $row_value) {
-                $next_index = true;
-                //tools_dump("row value",__FILE__,__LINE__,$row_value);
-                if($is_hashed){
-                    //inject in a hash
-                    $row_value[$has_name] = $hash;
-                    $hash = $hash + 1;
-                    //tools_dump("row value",__FILE__,__LINE__,$row_value);
-                }
-                foreach ($row_value as $path_to => $path_value) {
-                    if(preg_match('/^\d+$/', $path_to)){
-                        continue;
-                    }else{
-                        //desconstruct the path to the value
-                        $path_parts = explode("__",$path_to); 
 
-                        //walk through the honey
-                        $honey_ref = &$honey;
-                        for ($i=0; $i < count($path_parts); $i++) { 
-                            $path_part = $path_parts[$i];
-                            //hidden fields
-                            if($i+2 == count($path_parts)){
-                                $hk = $path_parts[$i] . BEE_SEP . $path_parts[$i+1]; 
-                                //skip password for login senarios
-                                if($BEE_GLOBALS["is_login_call"] == true && $path_parts[$i+1] == "password"){
-                                    //do nothing about it for now
-                                    //because we need this value laiter on
-                                }else{
-                                    if($has_hidden){
-                                        //tools_dump("_hiddenx",__FILE__,__LINE__,$hk);
-                                        if(in_array($hk,$structure["_hidden"])){
-                                            //this is a hidden field, so we just kafk it a smart wire
-                                            $i = count($path_parts) + 1;
-                                            continue;
+        //check if we are dealing with _nx situations here
+        if(array_key_exists("_n",$raw_honeys) && count($raw_honeys["_n"]) > 0){
+            //tools_dumpx("found here ",__FILE__,__LINE__,$raw_honeys["_n"]);
+            foreach ($raw_honeys["_n"] as $nraw_honey_index => $nraw_honeys) {
+                $pr_res = packaging_run($nraw_honeys,$nectoroid,$structure,$connection);
+                //tools_dumpx("pr_res ",__FILE__,__LINE__,$pr_res[BEE_RI]);
+                $res[BEE_EI] = array_merge($res[BEE_EI],$pr_res[BEE_EI]);
+                $res[2] = $pr_res[2];
+                $structure = $res[2];
+                //go in and do some extractions
+                foreach ($pr_res[BEE_RI] as $root_node_name => $root_value) {
+                    if(!array_key_exists($root_node_name,$honey)){
+                        $honey[$root_node_name] = array();
+                    }
+                    $foo = str_replace("_","",$nraw_honey_index); 
+                    $honey[$root_node_name][$foo] = $root_value;
+                }
+            }
+        }else{
+            foreach ($raw_honeys as $raw_honey_index => $raw_honey_group) {
+            
+                //the raw_honey_group contains
+                //raw_honey, paths_to_clean, children
+                $raw_honey = $raw_honey_group["raw_honey"];
+                //tools_dump("raw_honey_index ",__FILE__,__LINE__,$raw_honey_index );
+                $is_hashed = false;
+                $has_name = "";
+                $hash = 1;
+                if(is_string($raw_honey_group["hash"])){
+                    //tools_dumpx("structure",__FILE__,__LINE__,$structure);
+                    //tools_dumpx("#hash: ",__FILE__,__LINE__,$raw_honey_group["hash"]);
+                    $is_hashed = true;
+                    $has_name = $raw_honey_group["hash"];
+                }
+                //edge case of no results returned as in empty results
+                if(count($raw_honey) == 0){
+                    //every index indicates a root node in the nectoroid
+                    $ti = 0; //target index
+                    foreach ($nectoroid as $rti => $rtv) {//root node index, root node value
+                        if(tools_startsWith($rti, "_")){
+                            continue;
+                        }
+                        if($ti == $raw_honey_index){
+                            $cn  = Inflect::singularize($rti);
+                            if($cn == $rti){
+                                //an object was supposed to be here so we get null
+                                $honey[$rti] = null;
+                            }else{
+                                //an empty array of results
+                                $honey[$rti] = array();
+                            }
+                            //we dont need to mind bout children at this point
+                            break; //we got what we come for here
+                        }
+                        $ti = $ti + 1; //continue the search
+                    }
+                    continue;
+                }
+                foreach ($raw_honey as $row_index => $row_value) {
+                    $next_index = true;
+                    //tools_dump("row value",__FILE__,__LINE__,$row_value);
+                    if($is_hashed){
+                        //inject in a hash
+                        $row_value[$has_name] = $hash;
+                        $hash = $hash + 1;
+                        //tools_dump("row value",__FILE__,__LINE__,$row_value);
+                    }
+                    foreach ($row_value as $path_to => $path_value) {
+                        if(preg_match('/^\d+$/', $path_to)){
+                            continue;
+                        }else{
+                            //desconstruct the path to the value
+                            $path_parts = explode("__",$path_to); 
+    
+                            //walk through the honey
+                            $honey_ref = &$honey;
+                            for ($i=0; $i < count($path_parts); $i++) { 
+                                $path_part = $path_parts[$i];
+                                //hidden fields
+                                if($i+2 == count($path_parts)){
+                                    $hk = $path_parts[$i] . BEE_SEP . $path_parts[$i+1]; 
+                                    //skip password for login senarios
+                                    if($BEE_GLOBALS["is_login_call"] == true && $path_parts[$i+1] == "password"){
+                                        //do nothing about it for now
+                                        //because we need this value laiter on
+                                    }else{
+                                        if($has_hidden){
+                                            //tools_dump("_hiddenx",__FILE__,__LINE__,$hk);
+                                            if(in_array($hk,$structure["_hidden"])){
+                                                //this is a hidden field, so we just kafk it a smart wire
+                                                $i = count($path_parts) + 1;
+                                                continue;
+                                            }
                                         }
                                     }
                                 }
-                            }
-                            //detect if its the last part which indicates value
-                            if($i+1 == count($path_parts)){
-                                //nyd
-                                //consult the structure to know the data type to 
-                                //use to render the value
-
-                                //nyd
-                                //insert value
-                                $honey_ref[$path_part] = $path_value;
-                                unset($honey_ref); //http://php.net/manual/en/language.references.arent.php
-                                continue;
-                            }
-                            if(!array_key_exists($path_part,$honey_ref)){
-                                //determine if its a collection or an object
-                                $singular  = Inflect::singularize($path_part);
-                                if($singular == $path_part){//then path_part was singular
-                                    $honey_ref[$path_part] = array();
-                                    $honey_ref = &$honey_ref[$path_part];
-                                }else{
-                                    //create an array then create and object array inside this one
-                                    $honey_ref[$path_part] = array(array());
-                                    $honey_ref = &$honey_ref[$path_part][0];
-                                    $next_index = false;
+                                //detect if its the last part which indicates value
+                                if($i+1 == count($path_parts)){
+                                    //nyd
+                                    //consult the structure to know the data type to 
+                                    //use to render the value
+    
+                                    //nyd
+                                    //insert value
+                                    $honey_ref[$path_part] = $path_value;
+                                    unset($honey_ref); //http://php.net/manual/en/language.references.arent.php
+                                    continue;
                                 }
-                            }else{
-                                //the key exists
-                                //determine if its a collection or an object
-                                $singular  = Inflect::singularize($path_part);
-                                if($singular == $path_part){//then path_part was singular
-                                    //get a refrence to this object
-                                    $honey_ref = &$honey_ref[$path_part];
-                                }else{
-                                    if($next_index){
-                                        //echo "inserting a new object <br/>";
-                                        //insert a new object and get a reference
-                                        array_push($honey_ref[$path_part],array());
-                                        $honey_ref = &$honey_ref[$path_part][count($honey_ref[$path_part])-1];
-                                        $next_index = false;
+                                if(!array_key_exists($path_part,$honey_ref)){
+                                    //determine if its a collection or an object
+                                    $singular  = Inflect::singularize($path_part);
+                                    if($singular == $path_part){//then path_part was singular
+                                        $honey_ref[$path_part] = array();
+                                        $honey_ref = &$honey_ref[$path_part];
                                     }else{
-                                        //get the reference to the last element of the array
-                                        //tools_dump("@ff",__FILE__,__LINE__,$honey_ref);
-                                       //tools_dump("@ff3",__FILE__,__LINE__,$path_part);
-                                        $honey_ref = &$honey_ref[$path_part][count($honey_ref[$path_part])-1];
+                                        //create an array then create and object array inside this one
+                                        $honey_ref[$path_part] = array(array());
+                                        $honey_ref = &$honey_ref[$path_part][0];
+                                        $next_index = false;
+                                    }
+                                }else{
+                                    //the key exists
+                                    //determine if its a collection or an object
+                                    $singular  = Inflect::singularize($path_part);
+                                    if($singular == $path_part){//then path_part was singular
+                                        //get a refrence to this object
+                                        $honey_ref = &$honey_ref[$path_part];
+                                    }else{
+                                        if($next_index){
+                                            //echo "inserting a new object <br/>";
+                                            //insert a new object and get a reference
+                                            array_push($honey_ref[$path_part],array());
+                                            $honey_ref = &$honey_ref[$path_part][count($honey_ref[$path_part])-1];
+                                            $next_index = false;
+                                        }else{
+                                            //get the reference to the last element of the array
+                                            //tools_dump("@ff",__FILE__,__LINE__,$honey_ref);
+                                           //tools_dump("@ff3",__FILE__,__LINE__,$path_part);
+                                            $honey_ref = &$honey_ref[$path_part][count($honey_ref[$path_part])-1];
+                                        }
                                     }
                                 }
-                            }
-                        }                           
+                            }                           
+                        }
                     }
-                }
-            } 
-            //tools_dump("@4 production_run current honey",__FILE__,__LINE__,$honey);
+                } 
+                //tools_dump("@4 production_run current honey",__FILE__,__LINE__,$honey);
+    
+                //process the children of this path_route
+                //get the child queries at every node of the query
+                //using the honey as parent refreneces for where clauses
+                $child_paths = $raw_honey_group["children"];
+                //tools_dump("@4.1 child_paths: ",__FILE__,__LINE__,$child_paths);
+                //tools_dump("@4.2 nectoroid: ",__FILE__,__LINE__,$nectoroid);
+                //process the children of this path_route
+                //get the child queries at every node of the query
+                //using the honey as parent refreneces for where clauses
+                $child_paths = $raw_honey_group["children"];
+                //cbh
+                if(count($child_paths)>0){
+                    $prc_res = packaging_run_children($child_paths,$honey,$nectoroid,$structure,$connection);
+                    $honey = $prc_res[BEE_RI];
+                    $res[BEE_RI] = array_merge($res[BEE_RI],$prc_res[BEE_RI]);
+                    $res[2] = $prc_res[2];
+                    //tools_dumpx("#children honey: ",__FILE__,__LINE__,$prc_res);
+                }else{
+    
+                } 
+            }  
+        }
 
-            //process the children of this path_route
-            //get the child queries at every node of the query
-            //using the honey as parent refreneces for where clauses
-            $child_paths = $raw_honey_group["children"];
-            //tools_dump("@4.1 child_paths: ",__FILE__,__LINE__,$child_paths);
-            //tools_dump("@4.2 nectoroid: ",__FILE__,__LINE__,$nectoroid);
-            //process the children of this path_route
-            //get the child queries at every node of the query
-            //using the honey as parent refreneces for where clauses
-            $child_paths = $raw_honey_group["children"];
-            //cbh
-            if(count($child_paths)>0){
-                $prc_res = packaging_run_children($child_paths,$honey,$nectoroid,$structure,$connection);
-                $honey = $prc_res[BEE_RI];
-                $res[BEE_RI] = array_merge($res[BEE_RI],$prc_res[BEE_RI]);
-                $res[2] = $prc_res[2];
-                //tools_dumpx("#children honey: ",__FILE__,__LINE__,$prc_res);
-            }else{
-
-            } 
-        }    
         //tools_dumpx("kafulaka honey",__FILE__,__LINE__,$honey);
         $res[BEE_RI] = $honey;
         return $res;

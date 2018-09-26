@@ -4,17 +4,37 @@
     function production_run($sqls,$connection){
         $res = array(array(),array());
         foreach ($sqls as $sql_index => $sql_group) {
+            //check if we are executing at _nx
+            if(array_key_exists("_n",$sql_group) && count($sql_group["_n"]) > 0){
+                //tools_dumpx("production_run _n",__FILE__,__LINE__,$sql_group["_n"]);
+                $nres = array(
+                    "raw_honey" => array(),
+                    "paths_to_clean" =>  $sql_group["paths_to_clean"],
+                    "children" => $sql_group["children"],
+                    "hash" => $sql_group["hash"],
+                    "_n" => array()
+                );
+                $res[BEE_RI] = $nres;
+                foreach ($sql_group["_n"] as $nsqlkey => $nsqls) {
+                    $pr_res = production_run($nsqls,$connection);
+                    $res[BEE_EI] = array_merge($res[BEE_EI],$pr_res[BEE_EI]);
+                    $res[BEE_RI]["_n"][$nsqlkey] = $pr_res[BEE_RI];//$hr_res[BEE_RI]["data"]
+                }
+                continue;
+            }
+            
             //the sql_group contains
             //sql, paths_to_clean, children
             $sql = $sql_group["sql"];
-            ///tools_dump("sql ",__FILE__,__LINE__,$sql);
+            //tools_dump("sql ",__FILE__,__LINE__,$sql);
             $hr_res = hive_run($sql,$connection);
             $res[BEE_EI] = array_merge($res[BEE_EI],$hr_res[BEE_EI]);
             array_push($res[BEE_RI],array(
                 "raw_honey" => $hr_res[BEE_RI]["data"],
                 "paths_to_clean" =>  $sql_group["paths_to_clean"],
                 "children" => $sql_group["children"],
-                "hash" => $sql_group["hash"]
+                "hash" => $sql_group["hash"],
+                "_n" => array()
             ));
         }
         return $res;

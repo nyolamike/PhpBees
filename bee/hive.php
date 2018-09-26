@@ -354,7 +354,7 @@ function hive_after_segmentation_run($segmentation_run_res,$nectoroid,$structure
             //tools_dump("xtu removed",__FILE__,__LINE__,$sr_res[BEE_RI]);
         }
         $sr_res = sqllization_run($sr_res[BEE_RI]);
-        //tools_dumpx("@2 sqllization_run res: ",__FILE__,__LINE__,$sr_res[BEE_RI]);
+        //tools_dump("@2 sqllization_run res: ",__FILE__,__LINE__,$sr_res[BEE_RI]);
         //convert these queries into raw honey
         $pr_res = production_run($sr_res[BEE_RI],$connection);
         //tools_dump("@3 production_run res: ",__FILE__,__LINE__,$pr_res);
