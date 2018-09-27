@@ -11,8 +11,9 @@
         $whole_honey = array(
             "permissions" => array()
         );
+        
         foreach ($combs as $combs_name => $combs_def) {
-            if(tools_startsWith($comb_name,"_")){
+            if(tools_startsWith($combs_name,"_")){
                 continue;
             }
             $plural_name = Inflect::pluralize($combs_name);

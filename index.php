@@ -216,6 +216,17 @@
     //bakuwekyonya
     //how could i let you leave me, now its too late to, i need you back but you are gone
     //i wanna overdose with you, ganstar love comes without warning, i need a remedi for my problems
+
+    {
+        sells_receipt_items:{
+            _a:"id name ",
+            stockin:{},
+            _w:
+        }
+    }
+
+
     */
+    
     
 ?>
