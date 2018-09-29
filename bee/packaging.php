@@ -110,7 +110,26 @@
                                     //nyd
                                     //consult the structure to know the data type to 
                                     //use to render the value
-    
+                                    if($path_part == "id"){
+                                        $path_value = intval($path_value);
+                                    }else{
+                                        $sect_singular_name = Inflect::singularize($path_parts[$i-1]); 
+                                        if(array_key_exists($sect_singular_name,$structure)){
+                                            $xef = $structure[$sect_singular_name];
+                                            if(array_key_exists($path_part,$xef)){
+                                                $xefv = $xef[$path_part];
+                                                //tools_dumpx("multiplying ",__FILE__,__LINE__,array($xefv));
+                                                $typex = $xefv[0];
+                                                if($typex == "inn" || $typex == "in"){
+                                                    $path_value = intval($path_value);
+                                                }elseif($typex == "dn" || $typex == "dnn"){
+                                                    $path_value = doubleval($path_value);
+                                                }
+                                            }
+                                        }
+                                    }
+                                    
+                                    
                                     //nyd
                                     //insert value
                                     $honey_ref[$path_part] = $path_value;

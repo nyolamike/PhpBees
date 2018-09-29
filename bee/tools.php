@@ -96,6 +96,7 @@
              break;
              case JSON_ERROR_SYNTAX:
                 $msg = "JSON_ERROR_SYNTAX - Syntax error, malformed JSON";
+                //var_dump($json);
                 break;
              break;
              case JSON_ERROR_UTF8:

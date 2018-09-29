@@ -31,6 +31,16 @@
                     // $honey_to_extract = $hasr_res[BEE_RI];
                     // $whole_honey[$node_name] = $honey_to_extract;
                 }
+                //_nxtva_ n extract values into an array
+                if(tools_startsWith($root_node_name,"_nxtva_")){
+                    //tools_dumpx("@1xtu res: ",__FILE__,__LINE__,$root_node_name);
+                    if(!array_key_exists("_nxtva_",$whole_honey)){
+                        $whole_honey["_nxtva_"] = array();
+                    }
+                    $nn = str_replace("_nxtva_","",$root_node_name);
+                    $whole_honey["_nxtva_"][$nn] = $root_node;
+                    //tools_dumpx("@1xtu res: ",__FILE__,__LINE__,$whole_honey);
+                }
                 continue;
             }
             $config = array(
@@ -421,8 +431,48 @@
             $do_this_instead = "";
             if(tools_startsWith($section_name,"_")){
                 $fall_through = "";
+                $worked_on = false;
+
+                
+                if(tools_startsWith($section_name,"_sum_") && !$worked_on){
+                    $section_name = substr($section_name,5);
+                    $sectfxs = array();
+                    if(stripos($section_name,"->") > -1){
+                        $sectfxs = explode("->",$section_name);
+                    }elseif(stripos($section_name,"~") > -1){
+                        $sectfxs = explode("~",$section_name);
+                    }elseif(stripos($section_name,"...") > -1){
+                        $sectfxs = explode("...",$section_name);
+                    }
+
+                    $exp = "";
+                    //multiply
+                    if(stripos($section_name,"*") > -1){
+                        $parts = explode("*",$sectfxs[0]);
+                        $multiples = " (";
+                        foreach ($parts as $part) { 
+                            $multiples = $multiples . " " . $comb_name . "." . $part . " *";
+                        }
+                        $multiples = $multiples . " 1) ";
+                        $exp = $multiples;
+                    }else{
+                        $exp = " " . $comb_name . "." . $part;
+                    }
+
+                    $temp_path_to = $path . BEE_SEP . $sectfxs[1];
+                    $subsql = " SUM(" . $exp . ") as " . $temp_path_to;
+                    $do_this_instead = $subsql;
+                    $fall_through = true;
+                    //tools_dumpx("multiplying ",__FILE__,__LINE__,$do_this_instead);
+                    $fall_through = true;
+                    $worked_on = true;
+                }
+
+                
+                
+                
                 //fx
-                if(tools_startsWith($section_name,"_fx_")){
+                if(tools_startsWith($section_name,"_fx_") && !$worked_on){
                     $fx_node = $parent_node[$section_name];
                     $bsfr_res = bee_sqllization_fx_run($fx_node,$comb_name,$hive_structure);
                     $errors = array_merge($errors,$bsfr_res[BEE_EI]);
@@ -431,10 +481,11 @@
                     $subsql = $bsfr_res[BEE_RI] . " as " . $temp_path_to;
                     $do_this_instead = $subsql;
                     $fall_through = true;
+                    $worked_on = true;
                 }
 
                 //count
-                if(tools_startsWith($section_name,"_count") || tools_startsWith($section_name,"_cnt") ){
+                if((tools_startsWith($section_name,"_count") || tools_startsWith($section_name,"_cnt"))  && !$worked_on){
                     //e.g
                     //_count _count_ _count_name _count_* _countu_name 
                     $sectfx = "";
@@ -467,8 +518,39 @@
                     $subsql = " COUNT(". $d . $sectfx . ") as ". $temp_path_to;
                     $do_this_instead = $subsql;
                     $fall_through = true;
+                    $worked_on = true;
                 }
                 
+
+                //tools_dump("multiplying ",__FILE__,__LINE__,array($section_name,stripos($section_name,"*")));
+                //* multiplying in line section
+                if(stripos($section_name,"*") > -1  && !$worked_on){
+                    //as 0700898772 0778351666
+                    $section_name = substr($section_name,1);
+                    $sectfxs = array();
+                    if(stripos($section_name,"->") > -1){
+                        $sectfxs = explode("->",$section_name);
+                    }elseif(stripos($section_name,"~") > -1){
+                        $sectfxs = explode("~",$section_name);
+                    }elseif(stripos($section_name,"...") > -1){
+                        $sectfxs = explode("...",$section_name);
+                    }
+
+                    $parts = explode("*",$sectfxs[0]);
+                    $multiples = " (";
+                    foreach ($parts as $part) { 
+                        $multiples = $multiples . " " . $comb_name . "." . $part . " *";
+                    }
+                    $multiples = $multiples . " 1) ";
+
+                    $temp_path_to = $path . BEE_SEP . $sectfxs[1];
+                    $subsql = $multiples . " as " . $temp_path_to;
+                    $do_this_instead = $subsql;
+                    $fall_through = true;
+                    //tools_dumpx("multiplying ",__FILE__,__LINE__,$do_this_instead);
+                }
+
+
                 if($fall_through == false){
                     continue; //just in case anything wired went through
                 }
@@ -514,7 +596,8 @@
         if(stripos($left,"_fx_") > -1){
             $left = "" . $node_name . BEE_SEP . str_replace("_fx_","",$left);
         }else{
-            $left = "" . $comb_name . "." . $left;
+            $left = seg_combine($comb_name,$left); 
+            //"" . $comb_name . "." . $left;
         }
         return $left;
     }
@@ -526,6 +609,14 @@
         //$right = "_fxx_";
         //tools_dumpx("seg_fxr ",__FILE__,__LINE__,is_int(stripos($right,"_fx_")));
         return $right;
+    }
+    function seg_combine($comb_name,$toCombine){
+        if(tools_startsWith($toCombine, "_fk_")){ 
+            //things are left the way they are
+            $toCombine = substr($toCombine,4);
+            return $toCombine;
+        }
+        return $comb_name . "." . $toCombine;
     }
     function segmentation_run_where_entry($where_entry,$comb_name,$node_name){
         $left = $where_entry[0];
@@ -540,7 +631,7 @@
                 $val_right = "'".$val_right."'";
             }elseif(stripos($left,"_fx_") > -1){
                 //having
-                $val_right = $comb_name . "." . str_replace("_fx_","",$right);
+                $val_right = seg_combine($comb_name,str_replace("_fx_","",$right)); 
             }
             $sql = $sql . " " . $val_left . " = " . $val_right;
         }elseif($condition == ">=" || $condition == "gte" ||   $condition == "GTE" ){
@@ -551,7 +642,8 @@
                 $val_right = "'".$val_right."'";
             }elseif(stripos($left,"_fx_") > -1){
                 //having
-                $val_right = $comb_name . "." . str_replace("_fx_","",$right);
+                $val_right = seg_combine($comb_name,str_replace("_fx_","",$right));  
+                //$comb_name . "." . str_replace("_fx_","",$right);
             }
             $sql = $sql . " " . $val_left . " >= " . $val_right;
         }elseif($condition == "<=" || $condition == "lte" ||   $condition == "LTE" ){
@@ -562,7 +654,8 @@
                 $val_right = "'".$val_right."'";
             }elseif(stripos($left,"_fx_") > -1){
                 //having
-                $val_right = $comb_name . "." . str_replace("_fx_","",$right);
+                $val_right = seg_combine($comb_name,str_replace("_fx_","",$right)); 
+                // $comb_name . "." . str_replace("_fx_","",$right);
             }
             $sql = $sql . " " . $val_left . " <= " . $val_right;
         }elseif($condition == "!=" || $condition == "ne" ||   $condition == "NE" ){
@@ -573,7 +666,8 @@
                 $val_right = "'".$val_right."'";
             }elseif(stripos($left,"_fx_") > -1){
                 //having
-                $val_right = $comb_name . "." . str_replace("_fx_","",$right);
+                $val_right = seg_combine($comb_name,str_replace("_fx_","",$right)); 
+                //$comb_name . "." . str_replace("_fx_","",$right);
             }
             $sql = $sql . " " . $val_left . " != " . $val_right;
         }elseif($condition == ">" || $condition == "gt" ||   $condition == "GT" ){
@@ -584,7 +678,8 @@
                 $val_right = "'".$val_right."'";
             }elseif(stripos($left,"_fx_") > -1){
                 //having
-                $val_right = $comb_name . "." . str_replace("_fx_","",$right);
+                $val_right = seg_combine($comb_name,str_replace("_fx_","",$right)); 
+                //$comb_name . "." . str_replace("_fx_","",$right);
             }
             $sql = $sql . " " . $val_left . " > " . $val_right;
         }elseif($condition == "<" || $condition == "lt" ||   $condition == "LT" ){
@@ -595,7 +690,8 @@
                 $val_right = "'".$val_right."'";
             }elseif(stripos($left,"_fx_") > -1){
                 //having
-                $val_right = $comb_name . "." . str_replace("_fx_","",$right);
+                $val_right = seg_combine($comb_name,str_replace("_fx_","",$right)); 
+                //$comb_name . "." . str_replace("_fx_","",$right);
             }
             $sql = $sql . " " . $val_left . " < " . $val_right;
         }elseif($condition == "LIKE" || $condition == "like" || $condition == "lk" || $condition == "~" ){

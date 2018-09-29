@@ -353,6 +353,14 @@ function hive_after_segmentation_run($segmentation_run_res,$nectoroid,$structure
             unset($sr_res[BEE_RI]["xtu"]);
             //tools_dump("xtu removed",__FILE__,__LINE__,$sr_res[BEE_RI]);
         }
+        //remove any n extractions into values array
+        $nxtva = array();
+        if(array_key_exists("_nxtva_",$sr_res[BEE_RI])){
+            //tools_dump("nxtva added",__FILE__,__LINE__,$sr_res[BEE_RI]);
+            $nxtva = $sr_res[BEE_RI]["_nxtva_"];
+            unset($sr_res[BEE_RI]["_nxtva_"]);
+            //tools_dump("nxtva removed",__FILE__,__LINE__,$sr_res[BEE_RI]);
+        }
         $sr_res = sqllization_run($sr_res[BEE_RI]);
         //tools_dump("@2 sqllization_run res: ",__FILE__,__LINE__,$sr_res[BEE_RI]);
         //convert these queries into raw honey
@@ -546,6 +554,197 @@ function hive_after_segmentation_run($segmentation_run_res,$nectoroid,$structure
 
                 $res[BEE_RI][$xtu_key] = $xtracted;
                 unset($res[BEE_RI][$xtu_path_parts[0]]);//delete previous honey at this node
+            }
+        }
+        if(!empty($nxtva)){
+            //nyd
+            //please correct this algorithm
+            foreach ($nxtva as $xtva_key => $xtva_path) {
+                //the node at $xtva_key contains n objects
+                $values = array();
+                $xtracted = array();
+                $xtu_path_parts = explode(".",$xtva_path);
+                //tools_dumpx("xtu_path_parts",__FILE__,__LINE__,$xtu_path_parts);
+                $nobjects = $res[BEE_RI][$xtva_key];
+                foreach ($nobjects as $nobject_key => $nobject_honey) {
+                    $value_source = $nobject_honey;//a reference to extract the final value
+                    $prev = "none"; //what is the nature of the previous
+                    for ($i=0; $i < count($xtu_path_parts); $i++) { 
+                        $xtu_path_part = $xtu_path_parts[$i];
+                        $singular_xtu = Inflect::singularize($xtu_path_part); 
+                        //detect the last path
+                        if($i+1 == count($xtu_path_parts)){
+                            if($singular_xtu == $xtu_path_part){
+                                //format
+                                $is_int = false;
+                                $is_double = false;
+                                if(tools_startsWith($xtu_path_part, "_int_")){
+                                    $xtu_path_part = substr($xtu_path_part,5);
+                                    $is_int = true;
+                                }
+                                if(tools_startsWith($xtu_path_part, "_dbl_")){
+                                    $xtu_path_part = substr($xtu_path_part,5);
+                                    $is_double = true;
+                                }
+                                //its an object
+                                if($prev == "none"){
+                                    //the reference is as an object at this point
+                                    //there is an object we are looking for here
+                                    //tools_dumpx("structure",__FILE__,__LINE__,array($xtu_path_part,$value_source));
+                                    $temp_obj = $value_source[0][$xtu_path_part];
+                                    $v = $temp_obj;
+                                    if($is_int){ $v = intval($v); } 
+                                    if($is_double){ $v = doubleval($v); }
+                                    array_push($values,$v);
+                                }elseif($prev == "object"){
+                                    //the reference is as an object at this point
+                                    //there is an object we are looking for here
+                                    $temp_obj = $value_source[0][$xtu_path_part];
+                                    $v = $temp_obj;
+                                    if($is_int){ $v = intval($v); } 
+                                    if($is_double){ $v = doubleval($v); }
+                                    array_push($values,$v);
+                                }elseif($prev == "array"){
+                                    //reference is an array
+                                    $temp_sov_keys = array(); //we dont need duplicates
+                                    foreach ($value_source as $sovObj) {
+                                        $sov = $sovObj[$xtu_path_part];
+                                        $v = $sov;
+                                        if($is_int){ $v = intval($v); } 
+                                        if($is_double){ $v = doubleval($v); }
+                                        array_push($values,$v);
+                                    }
+                                }
+                            }else{
+                                //its an array. period
+                                if($prev == "none"){
+                                    //the reference is as an array of objects at his point
+                                    //thevery object in the array has an attibute of the 
+                                    //target which is what we are looking for
+                                    //we are just beginig our travel
+                                    $temp_array = $value_source[$xtu_path_part];
+                                    $temp_sov_keys = array(); //we dont need duplicates
+                                    foreach ($temp_array as $sov) {
+                                        $v = $sov;
+                                        if($is_int){ $v = intval($v); } 
+                                        if($is_double){ $v = doubleval($v); }
+                                        array_push($values,$v);
+                                    }
+                                    $prev = "none";
+                                }elseif($prev == "object"){
+                                    //the refrence is an object, which has an array of these objects
+                                    //at this location
+                                    $temp_array = $value_source[$xtu_path_part];
+                                    $temp_sov_keys = array(); //we dont need duplicates
+                                    foreach ($temp_array as $sov) {
+                                        $v = $sov;
+                                        if($is_int){ $v = intval($v); } 
+                                        if($is_double){ $v = doubleval($v); }
+                                        array_push($values,$v);
+                                    }
+                                    $prev = "none";
+                                }elseif($prev == "array"){
+                                    $temp_sov_keys = array(); //we dont need duplicates
+                                    foreach ($value_source as $sovObj) {
+                                        $answer_array = $sovObj[$xtu_path_part];
+                                        //our answer is an array of objects
+                                        //we take only unique object of this array
+                                        foreach ($answer_array as $sov) {
+                                            $v = $sov;
+                                            if($is_int){ $v = intval($v); } 
+                                            if($is_double){ $v = doubleval($v); }
+                                            array_push($values,$v);
+                                        }
+                                    }
+                                    $prev = "none";
+                                }
+                            }
+                            $prev = "none";
+                            continue;
+                        }
+
+                        if($singular_xtu == $xtu_path_part){
+                            //this node is an object
+                            if($prev == "none"){
+                                //our travel has just began
+                                //the value source contains an object at this location
+                                $temp_array = $value_source[$xtu_path_part];
+                                //that object is the root to our values
+                                $value_source = $temp_array;
+                                $prev = "object";
+                            }elseif($prev == "object"){
+                                //the current ref is an object which has an object at this location
+                                //that object is the root to sov
+                                $temp_array = $value_source[$xtu_path_part];
+                                //that object is the root to our values
+                                $value_source = $temp_array;
+                                $prev = "object";
+                            }elseif($prev == "array"){
+                                //the refrence is an array of objects
+                                //each object contains an object at this location as the source
+                                //of values sov
+                                $temp_sov = array();
+                                $temp_sov_keys = array(); //we dont need duplicates
+                                foreach ($value_source as $sovHolder) {
+                                    $sov = $sovHolder[$xtu_path_part];
+                                    array_push($temp_sov,$sov);
+                                }
+                                //the refrence now becomes the new source of truth
+                                $value_source = $temp_sov;
+                                $prev = "array";//now out sov is an array of objects
+                            }
+                        }else{
+                            //this node is an array
+                            if($prev == "none"){
+                                //we are just beginig our travel
+                                //the value source contains an array at this location
+                                $temp_array = $value_source[$xtu_path_part];
+                                //every object in this array is a potential source of the value
+                                //we are looking for
+                                $temp_sov = array();
+                                $temp_sov_keys = array(); //we dont need duplicates
+                                foreach ($temp_array as $sov) {
+                                    array_push($temp_sov,$sov);
+                                }
+                                //the refrence now becomes the new source of truth
+                                $value_source = $temp_sov;
+                                $prev = "array";//now out sov is an array of objects
+                            }elseif($prev == "object"){
+                                //the refrence is an object and contains an array at this location
+                                //which has objects that are to become the sov
+                                $temp_array = $value_source[$xtu_path_part];
+                                //every object in this array is a potential source of the value
+                                //we are looking for
+                                $temp_sov = array();
+                                $temp_sov_keys = array(); //we dont need duplicates
+                                foreach ($temp_array as $sov) {
+                                    array_push($temp_sov,$sov);
+                                }
+                                //the refrence now becomes the new source of truth
+                                $value_source = $temp_sov;
+                                $prev = "array";//now out sov is an array of objects
+                            }elseif($prev == "array"){
+                                //the refrence is an array of ojects and each object
+                                //contains an array at this location with a batch of 
+                                //child objects that are to be the sov
+                                $temp_sov = array();
+                                $temp_sov_keys = array(); //we dont need duplicates
+                                foreach ($value_source as $sovHolder) {
+                                    $temp_array = $sovHolder[$xtu_path_part];
+                                    //every object in this array is a potential source of the value
+                                    //we are looking for
+                                    foreach ($temp_array as $sov) {
+                                        array_push($temp_sov,$sov);
+                                    }
+                                }
+                                //the refrence now becomes the new source of truth
+                                $value_source = $temp_sov;
+                                $prev = "array";//now out sov is an array of objects
+                            }
+                        }
+                    }
+                }
+                $res[BEE_RI][$xtva_key] = $values;
             }
         }
     }

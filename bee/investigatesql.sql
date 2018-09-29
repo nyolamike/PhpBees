@@ -1,34 +1,81 @@
 SELECT 
-product.id as products__id, 
-product.name as products__name,  
-IFNULL(
-(
-    SELECT 
-    SUM(stockout_item.quantity) 
-    FROM stockout_item 
-    WHERE  
-        (stockout_item.is_deleted = 0) AND ( 
-            stockout_item.product_id = product.id 
-        )
-),
-0)
--
-IFNULL(
-(
-    SELECT 
-    SUM(stockin_item.quantity) 
-    FROM stockin_item 
-    WHERE  
-        (stockin_item.is_deleted = 0) AND ( 
-            stockin_item.product_id = product.id 
-        )
-),
-0) as products__nomis, 
-product.is_deleted as products__is_deleted,   
-unit.id as products__unit__id, 
-unit.name as products__unit__name, 
-unit.symbol as products__unit__symbol, 
-unit.description as products__unit__description 
-FROM product  
-INNER JOIN unit ON product.unit_id=unit.id   
-WHERE  (product.is_deleted = 0)
+sells_receipt_items.id as sells_receipt_itemss__id, 
+sells_receipt_items.quantity as sells_receipt_itemss__quantity, 
+sells_receipt_items.selling_price as sells_receipt_itemss__selling_price, 
+SUM( 
+    ( sells_receipt_items.quantity * sells_receipt_items.selling_price * 1)
+) as sells_receipt_itemss__sub_total, 
+sells_receipt.id as sells_receipt_itemss__sells_receipt__id, 
+sells_receipt.client_id as sells_receipt_itemss__sells_receipt__client_id, 
+sells_receipt.client_payment_id as sells_receipt_itemss__sells_receipt__client_payment_id, 
+sells_receipt.section_id as sells_receipt_itemss__sells_receipt__section_id, 
+sells_receipt.document_number as sells_receipt_itemss__sells_receipt__document_number, 
+sells_receipt.date_time as sells_receipt_itemss__sells_receipt__date_time, 
+sells_receipt.vat as sells_receipt_itemss__sells_receipt__vat, 
+sells_receipt.discount as sells_receipt_itemss__sells_receipt__discount, 
+sells_receipt.notes as sells_receipt_itemss__sells_receipt__notes 
+FROM 
+sells_receipt_items INNER JOIN sells_receipt ON sells_receipt_items.sells_receipt_id=sells_receipt.id 
+WHERE 
+(sells_receipt_items.is_deleted = 0) AND (
+    ( sells_receipt.date_time >= 5473800) AND ( 
+        sells_receipt.date_time <= 5473829
+    )
+)
+
+SELECT 
+sells_receipt_items.quantity as sells_receipt_itemss__quantity, 
+sells_receipt_items.selling_price as sells_receipt_itemss__selling_price, 
+SUM( 
+    ( sells_receipt_items.quantity * sells_receipt_items.selling_price * 1)
+) as sells_receipt_itemss__sub_total 
+FROM 
+sells_receipt_items INNER JOIN sells_receipt ON sells_receipt_items.sells_receipt_id=sells_receipt.id 
+WHERE 
+(sells_receipt_items.is_deleted = 0) AND (
+    ( sells_receipt.date_time >= 5473800) AND ( 
+        sells_receipt.date_time <= 5473829
+    )
+)
+
+SELECT 
+SUM( 
+    ( sells_receipt_items.quantity * sells_receipt_items.selling_price * 1)
+) as sells_receipt_itemss__sub_total 
+FROM 
+sells_receipt_items INNER JOIN sells_receipt ON sells_receipt_items.sells_receipt_id=sells_receipt.id 
+WHERE 
+(sells_receipt_items.is_deleted = 0) AND (
+    ( sells_receipt.date_time >= 5473800) AND ( 
+        sells_receipt.date_time <= 5473829
+    )
+)
+
+SELECT 
+SUM( 
+    ( sells_receipt_items.quantity * sells_receipt_items.selling_price * 1)
+) as sells_receipt_itemss__sub_total 
+FROM 
+sells_receipt_items INNER JOIN sells_receipt ON sells_receipt_items.sells_receipt_id=sells_receipt.id 
+WHERE 
+(sells_receipt_items.is_deleted = 0) AND (
+    ( sells_receipt.date_time >= 5473800) AND ( 
+        sells_receipt.date_time <= 5473829
+    )
+)
+GROUP BY sells_receipt.date_time
+
+SELECT 
+sells_receipt.date_time,
+SUM( 
+    ( sells_receipt_items.quantity * sells_receipt_items.selling_price * 1)
+) as sells_receipt_itemss__sub_total 
+FROM 
+sells_receipt_items INNER JOIN sells_receipt ON sells_receipt_items.sells_receipt_id=sells_receipt.id 
+WHERE 
+(sells_receipt_items.is_deleted = 0) AND (
+    ( sells_receipt.date_time >= 5473800) AND ( 
+        sells_receipt.date_time <= 5473829
+    )
+)
+GROUP BY sells_receipt.date_time
