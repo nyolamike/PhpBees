@@ -456,7 +456,7 @@
                         $multiples = $multiples . " 1) ";
                         $exp = $multiples;
                     }else{
-                        $exp = " " . $comb_name . "." . $part;
+                        $exp = " " . $comb_name . "." . $sectfxs[0];
                     }
 
                     $temp_path_to = $path . BEE_SEP . $sectfxs[1];

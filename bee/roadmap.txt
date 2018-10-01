@@ -89,3 +89,7 @@ unit.symbol as products__unit__symbol,
 unit.description as products__unit__description 
 FROM product  
 INNER JOIN unit ON product.unit_id=unit.id
+
+
+=>run.php
+shifted if not public registration to be the last logic in the file

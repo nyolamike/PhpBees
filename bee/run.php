@@ -296,53 +296,7 @@
     }
 
 
-    //this is the last in this file
-    //register my application
-    //returns the connection to the hive
-    if($BEE_HIVE_STRUCTURE["is_registration_public"] == false){
-        $brrh_res = bee_run_register_hive(array(
-            "_f_register" => $BEE_HIVE_STRUCTURE["_f_register"]
-        ), $BEE);
-        $BEE_HIVE_CONNECTION = $brrh_res[BEE_RI];
-        $BEE["BEE_HIVE_CONNECTION"] = $BEE_HIVE_CONNECTION;
-        
-        
-        
-
-        //nyd
-        //get in the current state of the garden only if there was creation of new
-        //hive, the current code  below will run allways 
-        if(count($BEE_ERRORS)==0){
-            $hrgg_res = hive_run_get_garden($BEE_GARDEN_STRUCTURE,$BEE_GARDEN_CONNECTION);
-            $BEE_ERRORS = array_merge($BEE_ERRORS,$hrgg_res[BEE_EI]);
-            $GARDEN_STRUCTURE = $hrgg_res[2];
-            //tools_reply($hrgg_res[BEE_RI],$BEE_ERRORS,array($BEE_GARDEN_CONNECTION));
-            $BEE_GARDEN = $hrgg_res[BEE_RI];
-            //roles,permissions, modules
-            $security_nector = array(
-                "roles" => array(
-                    "role_permisiions" => array(),
-                    "role_modules" => array()
-                )
-            );
-            $brg_res = bee_run_get($security_nector,$BEE_HIVE_STRUCTURE["combs"],$BEE_HIVE_CONNECTION);
-            $BEE_ERRORS = array_merge($BEE_ERRORS,$brg_res[BEE_EI]);
-            $BEE_ROLES = $brg_res[BEE_RI]["roles"];
-            //tools_dumpx("brg_res",__FILE__,__LINE__,$brg_res[BEE_RI]);
-
-            $BEE = array(
-                "BEE_ROLES" => $BEE_ROLES,
-                "BEE_HIVE_STRUCTURE" => $BEE_HIVE_STRUCTURE,
-                "BEE_GARDEN_STRUCTURE" => $GARDEN_STRUCTURE,
-                "BEE_GARDEN_CONNECTION" => $BEE_GARDEN_CONNECTION,
-                "BEE_HIVE_CONNECTION" => $BEE_HIVE_CONNECTION,
-                "BEE_GARDEN" => $BEE_GARDEN,
-                "BEE_ERRORS" => $BEE_ERRORS,
-                "BEE_JWT_ENCRYPTION" => $BEE_JWT_ENCRYPTION,
-                "BEE_USER" => array("id"=>0)
-            );
-        }    
-    }
+    
 
 
     //nyd
@@ -583,6 +537,55 @@
             $bee["BEE_GARDEN_CONNECTION"],
             $bee["BEE_HIVE_CONNECTION"]
         ));
+    }
+
+
+    //this is the last in this file
+    //register my application
+    //returns the connection to the hive
+    if($BEE_HIVE_STRUCTURE["is_registration_public"] == false){
+        $brrh_res = bee_run_register_hive(array(
+            "_f_register" => $BEE_HIVE_STRUCTURE["_f_register"]
+        ), $BEE);
+        $BEE_HIVE_CONNECTION = $brrh_res[BEE_RI];
+        $BEE["BEE_HIVE_CONNECTION"] = $BEE_HIVE_CONNECTION;
+        
+        
+        
+
+        //nyd
+        //get in the current state of the garden only if there was creation of new
+        //hive, the current code  below will run allways 
+        if(count($BEE_ERRORS)==0){
+            $hrgg_res = hive_run_get_garden($BEE_GARDEN_STRUCTURE,$BEE_GARDEN_CONNECTION);
+            $BEE_ERRORS = array_merge($BEE_ERRORS,$hrgg_res[BEE_EI]);
+            $GARDEN_STRUCTURE = $hrgg_res[2];
+            //tools_reply($hrgg_res[BEE_RI],$BEE_ERRORS,array($BEE_GARDEN_CONNECTION));
+            $BEE_GARDEN = $hrgg_res[BEE_RI];
+            //roles,permissions, modules
+            $security_nector = array(
+                "roles" => array(
+                    "role_permisiions" => array(),
+                    "role_modules" => array()
+                )
+            );
+            $brg_res = bee_run_get($security_nector,$BEE_HIVE_STRUCTURE["combs"],$BEE_HIVE_CONNECTION);
+            $BEE_ERRORS = array_merge($BEE_ERRORS,$brg_res[BEE_EI]);
+            $BEE_ROLES = $brg_res[BEE_RI]["roles"];
+            //tools_dumpx("brg_res",__FILE__,__LINE__,$brg_res[BEE_RI]);
+
+            $BEE = array(
+                "BEE_ROLES" => $BEE_ROLES,
+                "BEE_HIVE_STRUCTURE" => $BEE_HIVE_STRUCTURE,
+                "BEE_GARDEN_STRUCTURE" => $GARDEN_STRUCTURE,
+                "BEE_GARDEN_CONNECTION" => $BEE_GARDEN_CONNECTION,
+                "BEE_HIVE_CONNECTION" => $BEE_HIVE_CONNECTION,
+                "BEE_GARDEN" => $BEE_GARDEN,
+                "BEE_ERRORS" => $BEE_ERRORS,
+                "BEE_JWT_ENCRYPTION" => $BEE_JWT_ENCRYPTION,
+                "BEE_USER" => array("id"=>0)
+            );
+        }    
     }
     
     

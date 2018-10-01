@@ -1107,7 +1107,7 @@ function bee_hive_run_uploads($bee){
             $file_size = 500000;
             $file_is_too_large = false;
             $file_type_is_right = true;
-            $allowed_file_types = array("jpg","png","jpeg","gif");
+            $allowed_file_types = array("jpg","png","jpeg","gif","pdf","txt","mp3","mp4");
             //nyd
             //check the  _hive.json to validate the uploaded file using the 
             //parameters below
@@ -1129,7 +1129,7 @@ function bee_hive_run_uploads($bee){
                 $uploadOk = 0;
             }
             // Allow certain file formats
-            if(in_array($imageFileType,$allowed_file_types)) {
+            if(!in_array($imageFileType,$allowed_file_types)) {
                 $file_type_is_right = false;
                 $uploadOk = 0;
             }
